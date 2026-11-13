@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { createClient, getUser } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
 import MyTabs from "../MyTabs";
 import ProfileForm from "./ProfileForm";
 
@@ -9,8 +9,7 @@ export const metadata: Metadata = { title: "내 정보" };
 export default async function ProfilePage() {
   const user = await getUser();
   if (!user) redirect("/login?next=/my/profile");
-  const supabase = await createClient();
-  const { data: p } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
+  const p = user;
   return (
     <section className="view">
       <span className="eyebrow">마이페이지</span>

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { createClient, getUser } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
+import { cols } from "@/lib/models";
 import { fmtDate, fmtDateTime, ORDER_STATUS, SUB_STATUS, won } from "@/lib/shop";
 import { updateOrder, updateProduct } from "@/app/actions/admin";
 
@@ -10,19 +11,23 @@ export const metadata: Metadata = { title: "관리자" };
 export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const user = await getUser();
   if (!user) redirect("/login?next=/admin");
-  const supabase = await createClient();
-  const { data: me } = await supabase.from("profiles").select("is_admin").eq("id", user.id).maybeSingle();
-  if (!me?.is_admin) notFound();
+  if (!user.is_admin) notFound();
 
   const sp = await searchParams;
   const tab = typeof sp.tab === "string" ? sp.tab : "orders";
 
-  const [{ data: orders }, { data: subs }, { data: products }, { count: members }] = await Promise.all([
-    supabase.from("orders").select("*, order_items(name, qty)").neq("status", "pending").order("created_at", { ascending: false }).limit(200),
-    supabase.from("subscriptions").select("*, pets(name)").order("next_date").limit(300),
-    supabase.from("products").select("*").order("sort"),
-    supabase.from("profiles").select("id", { count: "exact", head: true }),
+  const c = await cols();
+  const [orderDocs, subDocs, productDocs, members, pets] = await Promise.all([
+    c.orders.find({ status: { $ne: "pending" } }).sort({ created_at: -1 }).limit(200).toArray(),
+    c.subs.find({}).sort({ next_date: 1 }).limit(300).toArray(),
+    c.products.find({}).sort({ sort: 1 }).toArray(),
+    c.users.countDocuments(),
+    c.pets.find({}, { projection: { name: 1 } }).toArray(),
   ]);
+  const petName = new Map(pets.map((p) => [p._id, p.name]));
+  const orders = orderDocs.map((o) => ({ ...o, id: o._id, order_items: o.items }));
+  const subs = subDocs.map((s) => ({ ...s, id: s._id, pets: s.pet_id && petName.has(s.pet_id) ? { name: petName.get(s.pet_id)! } : null }));
+  const products = productDocs.map((p) => ({ ...p, id: p._id }));
 
   const paid = (orders ?? []).filter((o) => o.status !== "cancelled");
   const revenue = paid.reduce((a, o) => a + o.total, 0);

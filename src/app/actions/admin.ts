@@ -2,43 +2,49 @@
 
 import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
-import { createAdminClient, createClient, getUser } from "@/lib/supabase/server";
-import { cancelPayment } from "@/lib/toss";
+import { getUser } from "@/lib/auth";
+import { cols, type OrderStatus } from "@/lib/models";
+import { cancelOrderDoc } from "@/lib/orders";
 
 async function requireAdmin() {
   const user = await getUser();
-  if (!user) notFound();
-  const supabase = await createClient();
-  const { data } = await supabase.from("profiles").select("is_admin").eq("id", user.id).maybeSingle();
-  if (!data?.is_admin) notFound();
-  return supabase;
+  if (!user?.is_admin) notFound();
+  return user;
 }
 
-const STATUSES = ["paid", "preparing", "shipped", "delivered", "cancelled"];
+const STATUSES: OrderStatus[] = ["paid", "preparing", "shipped", "delivered", "cancelled"];
 
 export async function updateOrder(fd: FormData) {
-  const supabase = await requireAdmin();
+  await requireAdmin();
   const id = String(fd.get("id"));
-  const status = String(fd.get("status"));
+  const status = String(fd.get("status")) as OrderStatus;
   const tracking = String(fd.get("tracking_no") ?? "").trim().slice(0, 40);
   if (!STATUSES.includes(status)) return;
-  const { data: o } = await supabase.from("orders").select("status, payment_key").eq("id", id).single();
-  if (!o) return;
-  if (status === "cancelled" && o.status !== "cancelled" && o.payment_key) {
-    const r = await cancelPayment(o.payment_key, "판매자 취소");
-    if (!r.ok && r.code !== "ALREADY_CANCELED_PAYMENT") throw new Error("환불 실패: " + r.message);
-    await createAdminClient().from("subscriptions").update({ status: "cancelled" }).eq("order_id", id);
+  const { orders } = await cols();
+  const o = await orders.findOne({ _id: id });
+  if (!o || o.status === "cancelled") return;
+  if (status === "cancelled") {
+    const r = await cancelOrderDoc(o, "판매자 취소");
+    if (!r.ok) throw new Error("환불 실패: " + r.message);
+    await orders.updateOne({ _id: id }, { $set: { tracking_no: tracking } });
+  } else {
+    await orders.updateOne({ _id: id }, { $set: { status, tracking_no: tracking } });
   }
-  await supabase.from("orders").update({ status, tracking_no: tracking }).eq("id", id);
   revalidatePath("/admin");
 }
 
 export async function updateProduct(fd: FormData) {
-  const supabase = await requireAdmin();
-  const id = String(fd.get("id"));
-  const price = Math.max(0, Math.floor(Number(fd.get("price")) || 0));
-  const stock = Math.max(0, Math.floor(Number(fd.get("stock")) || 0));
-  const active = !!fd.get("active");
-  await supabase.from("products").update({ price, stock, active }).eq("id", id);
+  await requireAdmin();
+  const { products } = await cols();
+  await products.updateOne(
+    { _id: String(fd.get("id")) },
+    {
+      $set: {
+        price: Math.max(0, Math.floor(Number(fd.get("price")) || 0)),
+        stock: Math.max(0, Math.floor(Number(fd.get("stock")) || 0)),
+        active: !!fd.get("active"),
+      },
+    },
+  );
   revalidatePath("/", "layout");
 }

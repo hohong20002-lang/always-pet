@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { createClient, getUser } from "@/lib/supabase/server";
-import { fmtDateTime, modeNote, ORDER_STATUS, won, type Mode } from "@/lib/shop";
+import { getUser } from "@/lib/auth";
+import { cols } from "@/lib/models";
+import { fmtDateTime, modeNote, ORDER_STATUS, won } from "@/lib/shop";
 import CancelOrder from "./CancelOrder";
 
 export const metadata: Metadata = { title: "주문 상세" };
@@ -12,10 +13,10 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/my
   const sp = await searchParams;
   const user = await getUser();
   if (!user) redirect(`/login?next=/my/orders/${no}`);
-  const supabase = await createClient();
-  const { data: o } = await supabase.from("orders").select("*, order_items(*)").eq("order_no", no).maybeSingle();
+  const { orders } = await cols();
+  const o = await orders.findOne({ order_no: no, ...(user.is_admin ? {} : { user_id: user.id }) });
   if (!o) notFound();
-  const items = o.order_items as { id: string; name: string; image: string; unit_price: number; qty: number; mode: Mode; cycle_weeks: number; plan: string }[];
+  const items = o.items.map((it, i) => ({ ...it, id: String(i) }));
   const hasSub = items.some((i) => i.mode === "sub");
 
   return (

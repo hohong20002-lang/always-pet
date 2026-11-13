@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { getUser } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
 import { getPets } from "@/lib/queries";
 import { concernOf } from "@/lib/shop";
 import MyTabs from "../MyTabs";
@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "우리 아이" };
 export default async function PetsPage() {
   const user = await getUser();
   if (!user) redirect("/login?next=/my/pets");
-  const pets = await getPets();
+  const pets = await getPets(user.id);
   return (
     <section className="view">
       <span className="eyebrow">마이페이지</span>

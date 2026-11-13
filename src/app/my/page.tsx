@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { createClient, getUser } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
+import { cols } from "@/lib/models";
 import { fmtDateTime, ORDER_STATUS, won } from "@/lib/shop";
 import { logout } from "@/app/actions/auth";
 import SubCard, { type Sub } from "./SubCard";
@@ -12,14 +13,29 @@ export const metadata: Metadata = { title: "구독·주문" };
 export default async function MyPage() {
   const user = await getUser();
   if (!user) redirect("/login?next=/my");
-  const supabase = await createClient();
-  const [{ data: subs }, { data: orders }, { data: profile }] = await Promise.all([
-    supabase.from("subscriptions").select("*, pets(name)").order("created_at", { ascending: false }),
-    supabase.from("orders").select("order_no, order_name, total, status, created_at").neq("status", "pending").order("created_at", { ascending: false }).limit(20),
-    supabase.from("profiles").select("name").eq("id", user.id).maybeSingle(),
+  const c = await cols();
+  const [subDocs, orders, pets] = await Promise.all([
+    c.subs.find({ user_id: user.id }).sort({ created_at: -1 }).toArray(),
+    c.orders.find({ user_id: user.id, status: { $ne: "pending" } }).sort({ created_at: -1 }).limit(20).toArray(),
+    c.pets.find({ user_id: user.id }, { projection: { name: 1 } }).toArray(),
   ]);
-  const active = ((subs ?? []) as Sub[]).filter((s) => s.status === "active" || s.status === "paused");
-  const ended = ((subs ?? []) as Sub[]).filter((s) => s.status === "cancelled" || s.status === "farewell");
+  const petName = new Map(pets.map((p) => [p._id, p.name]));
+  const subs: Sub[] = subDocs.map((s) => ({
+    id: s._id,
+    name: s.name,
+    image: s.image,
+    price: s.price,
+    qty: s.qty,
+    cycle_weeks: s.cycle_weeks,
+    next_date: s.next_date,
+    remain: s.remain,
+    status: s.status,
+    paused_until: s.paused_until,
+    pet_name: s.pet_id ? petName.get(s.pet_id) ?? null : null,
+  }));
+  const profile = user;
+  const active = subs.filter((s) => s.status === "active" || s.status === "paused");
+  const ended = subs.filter((s) => s.status === "cancelled" || s.status === "farewell");
 
   return (
     <section className="view">

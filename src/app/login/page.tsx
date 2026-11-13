@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getUser } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
 import AuthForm from "./AuthForm";
 
 export const metadata: Metadata = { title: "로그인" };

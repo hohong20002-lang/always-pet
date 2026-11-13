@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { createClient, getUser } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
 import { loadCart } from "@/lib/cart";
 import { FREE_SHIP, won } from "@/lib/shop";
 import { CartQty } from "./CartQty";
@@ -20,7 +20,7 @@ export default async function CartPage() {
       </section>
     );
 
-  const cart = await loadCart(await createClient());
+  const cart = await loadCart(user.id);
   if (!cart.lines.length)
     return (
       <section className="view">

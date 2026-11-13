@@ -15,7 +15,7 @@ export type Sub = {
   remain: number;
   status: "active" | "paused" | "cancelled" | "farewell";
   paused_until: string | null;
-  pets: { name: string } | null;
+  pet_name: string | null;
 };
 
 const END_OPTS = [
@@ -37,8 +37,10 @@ export default function SubCard({ sub: s }: { sub: Sub }) {
     });
 
   const live = s.status === "active";
-  const suggest = remain >= 50 ? 7 : remain <= 20 ? -5 : 0;
-  const pet = s.pets?.name;
+  // 첫 주문 직후(100%)에는 아직 받기 전이라 제안하지 않아요
+  const fresh = remain === 100 && s.remain === 100;
+  const suggest = fresh ? 0 : remain >= 50 ? 7 : remain <= 20 ? -5 : 0;
+  const pet = s.pet_name;
 
   return (
     <div className="panel stack" style={{ opacity: pending ? 0.6 : 1 }}>
@@ -110,7 +112,9 @@ export default function SubCard({ sub: s }: { sub: Sub }) {
                 <div><button className="btn small" onClick={() => run(() => shiftNext(s.id, suggest))}>{fmtDate(addDays(s.next_date, suggest))}로 변경</button></div>
               </>
             ) : (
-              <div className="check ok">✓ <span>지금 배송일이 남은 양과 잘 맞아요.</span></div>
+              <div className="check ok">
+                ✓ <span>{fresh ? "박스를 받고 쓰다 보면 남은 양을 알려 주세요. 소비 속도에 맞춰 배송일을 제안해 드려요." : "지금 배송일이 남은 양과 잘 맞아요."}</span>
+              </div>
             )}
           </div>
         </>

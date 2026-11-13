@@ -2,7 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createClient, getUser } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
+import { newId } from "@/lib/db";
+import { cols } from "@/lib/models";
 import { AGE_GROUPS, CONCERNS, INGREDIENTS, WEIGHT_GROUPS } from "@/lib/shop";
 import { addToCart } from "./cart";
 
@@ -21,14 +23,14 @@ export type PetInput = {
 function clean(p: PetInput) {
   const concernIds = CONCERNS.map((c) => c.id as string);
   return {
-    name: p.name.trim().slice(0, 20) || "우리 아이",
-    species: p.species === "cat" ? "cat" : "dog",
-    breed: (p.breed ?? "").trim().slice(0, 30),
+    name: String(p.name ?? "").trim().slice(0, 20) || "우리 아이",
+    species: (p.species === "cat" ? "cat" : "dog") as "dog" | "cat",
+    breed: String(p.breed ?? "").trim().slice(0, 30),
     age_group: AGE_GROUPS.includes(p.age_group) ? p.age_group : AGE_GROUPS[1],
     weight_group: WEIGHT_GROUPS.includes(p.weight_group) ? p.weight_group : WEIGHT_GROUPS[0],
-    concerns: p.concerns.filter((c) => concernIds.includes(c)).slice(0, 2),
-    current_ingredients: p.current_ingredients.filter((c) => INGREDIENTS.includes(c)),
-    meds: (p.meds ?? "").trim().slice(0, 200),
+    concerns: (p.concerns ?? []).filter((c) => concernIds.includes(c)).slice(0, 2),
+    current_ingredients: (p.current_ingredients ?? []).filter((c) => INGREDIENTS.includes(c)),
+    meds: String(p.meds ?? "").trim().slice(0, 200),
   };
 }
 
@@ -36,25 +38,31 @@ function clean(p: PetInput) {
 export async function savePet(p: PetInput, next = "/my/pets"): Promise<{ id?: string; error?: string }> {
   const user = await getUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(next)}`);
-  const supabase = await createClient();
+  const { pets } = await cols();
   const row = clean(p);
   if (p.id) {
-    const { error } = await supabase.from("pets").update(row).eq("id", p.id);
-    if (error) return { error: "저장하지 못했어요." };
-    revalidatePath("/", "layout");
-    return { id: p.id };
+    const r = await pets.updateOne({ _id: p.id, user_id: user.id }, { $set: row });
+    if (r.matchedCount) {
+      revalidatePath("/", "layout");
+      return { id: p.id };
+    }
   }
-  const { data, error } = await supabase.from("pets").insert({ ...row, user_id: user.id }).select("id").single();
-  if (error || !data) return { error: "저장하지 못했어요." };
+  const id = newId();
+  await pets.insertOne({ _id: id, user_id: user.id, ...row, created_at: new Date() });
   revalidatePath("/", "layout");
-  return { id: data.id };
+  return { id };
 }
 
 export async function deletePet(id: string) {
   const user = await getUser();
   if (!user) redirect("/login?next=/my/pets");
-  const supabase = await createClient();
-  await supabase.from("pets").delete().eq("id", id);
+  const { pets, logs, cart, subs } = await cols();
+  const r = await pets.deleteOne({ _id: id, user_id: user.id });
+  if (r.deletedCount) {
+    await logs.deleteMany({ pet_id: id, user_id: user.id });
+    await cart.updateMany({ pet_id: id, user_id: user.id }, { $set: { pet_id: null } });
+    await subs.updateMany({ pet_id: id, user_id: user.id }, { $set: { pet_id: null } });
+  }
   revalidatePath("/", "layout");
 }
 
@@ -62,5 +70,5 @@ export async function deletePet(id: string) {
 export async function addCareBox(p: PetInput, plan: string): Promise<{ ok?: string; error?: string }> {
   const saved = await savePet(p, "/box");
   if (!saved.id) return { error: saved.error ?? "저장하지 못했어요." };
-  return (await addToCart({ productId: "carebox", mode: "sub", cycle: 4, qty: 1, plan, petId: saved.id, next: "/box" })) ?? { error: "담지 못했어요." };
+  return addToCart({ productId: "carebox", mode: "sub", cycle: 4, qty: 1, plan, petId: saved.id, next: "/box" });
 }

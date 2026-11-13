@@ -108,7 +108,7 @@ export function fmtDate(iso: string) {
   const d = new Date(iso + "T00:00:00Z");
   return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일 (${"일월화수목금토"[d.getUTCDay()]})`;
 }
-export function fmtDateTime(ts: string) {
+export function fmtDateTime(ts: string | Date) {
   const d = new Date(new Date(ts).getTime() + 9 * 3600_000);
   const p = (x: number) => String(x).padStart(2, "0");
   return `${d.getUTCFullYear()}.${p(d.getUTCMonth() + 1)}.${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;

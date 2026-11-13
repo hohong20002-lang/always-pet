@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import "./globals.css";
-import { createClient, getUser, isConfigured } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
+import { isConfigured } from "@/lib/db";
+import { getCartCount } from "@/lib/queries";
 import { NavLinks, TabBar } from "@/components/Nav";
 
 export const metadata: Metadata = {
@@ -13,17 +15,8 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, view
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const user = await getUser();
-  let cartCount = 0;
-  let isAdmin = false;
-  if (user) {
-    const supabase = await createClient();
-    const [{ data: cart }, { data: profile }] = await Promise.all([
-      supabase.from("cart_items").select("qty"),
-      supabase.from("profiles").select("is_admin").eq("id", user.id).maybeSingle(),
-    ]);
-    cartCount = (cart ?? []).reduce((a, c) => a + c.qty, 0);
-    isAdmin = !!profile?.is_admin;
-  }
+  const cartCount = user ? await getCartCount(user.id) : 0;
+  const isAdmin = !!user?.is_admin;
 
   return (
     <html lang="ko">
@@ -67,7 +60,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         {!isConfigured() && (
           <div className="wrap" style={{ paddingTop: 16 }}>
             <div className="notice">
-              데이터베이스가 아직 연결되지 않았어요. <code>.env.local</code>에 Supabase 주소와 키를 넣어 주세요.
+              데이터베이스가 아직 연결되지 않았어요. <code>.env.local</code>에 MongoDB 연결 주소(MONGODB_URI)를 넣어 주세요.
             </div>
           </div>
         )}

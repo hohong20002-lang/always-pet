@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { createClient, getUser } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
+import { cols } from "@/lib/models";
 import { getPets } from "@/lib/queries";
 import { addDays, MEAL_LABEL, todayKST } from "@/lib/shop";
 import { vetReport, weeklySummary, type Log } from "@/lib/summary";
@@ -23,7 +24,7 @@ export default async function RecordPage({ searchParams }: PageProps<"/record">)
       </section>
     );
 
-  const pets = await getPets();
+  const pets = await getPets(user.id);
   if (!pets.length)
     return (
       <section className="view">
@@ -37,14 +38,12 @@ export default async function RecordPage({ searchParams }: PageProps<"/record">)
   const sp = await searchParams;
   const pet = pets.find((p) => p.id === sp.pet) ?? pets[0];
   const today = todayKST();
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("health_logs")
-    .select("id, log_date, meal, walk, poop, water, memo")
-    .eq("pet_id", pet.id)
-    .gte("log_date", addDays(today, -29))
-    .order("log_date", { ascending: false });
-  const logs = (data ?? []) as Log[];
+  const c = await cols();
+  const docs = await c.logs
+    .find({ pet_id: pet.id, user_id: user.id, log_date: { $gte: addDays(today, -29) } })
+    .sort({ log_date: -1 })
+    .toArray();
+  const logs: Log[] = docs.map((l) => ({ id: l._id, log_date: l.log_date, meal: l.meal, walk: l.walk, poop: l.poop, water: l.water, memo: l.memo }));
   const todayLog = logs.find((l) => l.log_date === today) ?? null;
   const sm = weeklySummary(logs, today);
   const days = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6));

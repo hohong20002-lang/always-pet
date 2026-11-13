@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { createClient, getUser } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
 import { loadCart } from "@/lib/cart";
 import { won } from "@/lib/shop";
 import CheckoutForm from "./CheckoutForm";
@@ -10,12 +10,9 @@ export const metadata: Metadata = { title: "주문·결제" };
 export default async function CheckoutPage() {
   const user = await getUser();
   if (!user) redirect("/login?next=/checkout");
-  const supabase = await createClient();
-  const [cart, { data: profile }] = await Promise.all([
-    loadCart(supabase),
-    supabase.from("profiles").select("name, phone, zipcode, address, address_detail").eq("id", user.id).maybeSingle(),
-  ]);
+  const cart = await loadCart(user.id);
   if (!cart.lines.length) redirect("/cart");
+  const profile = user;
 
   return (
     <section className="view">

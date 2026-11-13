@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getPets, getProduct } from "@/lib/queries";
-import { getUser } from "@/lib/supabase/server";
+import { getUser } from "@/lib/auth";
 import ProductBuy from "./ProductBuy";
 
 export async function generateMetadata({ params }: PageProps<"/products/[id]">): Promise<Metadata> {
@@ -16,7 +16,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[id]"
   const p = await getProduct(id);
   if (!p || !p.active) notFound();
   const user = await getUser();
-  const pets = user ? await getPets() : [];
+  const pets = user ? await getPets(user.id) : [];
   const pet = pets[0];
   const overlap = pet ? p.main_ingredients.filter((m) => pet.current_ingredients.includes(m)) : [];
 
