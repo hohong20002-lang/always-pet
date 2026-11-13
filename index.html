@@ -1,0 +1,738 @@
+<title>올웨이즈 펫 쇼핑몰</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: 반응형 쇼핑몰. 상단 헤더 + 해시 라우팅 화면 + 모바일 하단 탭. 'UX 개선 포인트' 토글로 설계 의도 주석 노출 */
+:root{
+  --bg:#FBF9F1; --surface:#FFFFFF; --sunk:#F2EFE2; --line:#E2DECD;
+  --fg:#1E2A20; --muted:#5E6A5F; --brand:#3D6B45; --brand-deep:#24432B; --on-brand:#FFFFFF;
+  --brand-soft:#E5EEDF; --warm:#C9772E; --warm-soft:#F8E9D8;
+  --ux:#6B4FA0; --ux-soft:#EFE9F8; --danger:#A8432F;
+  --f-display:"Gowun Dodum","Noto Sans KR",system-ui,sans-serif;
+  --f-body:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --r:14px; --maxw:1120px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121813; --surface:#1A221B; --sunk:#222C23; --line:#334034;
+  --fg:#ECE9DC; --muted:#A3AE9F; --brand:#8CC497; --brand-deep:#B9DDBE; --on-brand:#10200F;
+  --brand-soft:#243626; --warm:#E3A066; --warm-soft:#3A2A1B;
+  --ux:#BFA6EA; --ux-soft:#2B2338; --danger:#E58C78; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121813; --surface:#1A221B; --sunk:#222C23; --line:#334034;
+  --fg:#ECE9DC; --muted:#A3AE9F; --brand:#8CC497; --brand-deep:#B9DDBE; --on-brand:#10200F;
+  --brand-soft:#243626; --warm:#E3A066; --warm-soft:#3A2A1B;
+  --ux:#BFA6EA; --ux-soft:#2B2338; --danger:#E58C78; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.6;word-break:keep-all}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+a{color:inherit}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;line-height:1.3;text-wrap:balance;margin:0}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.num{font-variant-numeric:tabular-nums}
+
+/* header */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:20px;height:64px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo img{width:40px;height:40px;border-radius:10px;object-fit:cover}
+.logo b{font-family:var(--f-display);font-weight:400;font-size:20px;color:var(--brand-deep)}
+.gnb{display:flex;gap:4px;margin-left:8px}
+.gnb a{text-decoration:none;padding:8px 12px;border-radius:999px;color:var(--muted);font-weight:500}
+.gnb a[aria-current="page"]{color:var(--brand-deep);background:var(--brand-soft)}
+.top .tools{margin-left:auto;display:flex;align-items:center;gap:8px}
+.ux-toggle{border:1px solid var(--ux);background:transparent;color:var(--ux);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700}
+.ux-toggle[aria-pressed="true"]{background:var(--ux);color:var(--surface)}
+.cart-btn{position:relative;text-decoration:none;padding:8px 12px;border-radius:999px;border:1px solid var(--line);font-weight:500}
+.cart-btn .cnt{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:10px;background:var(--brand);color:var(--on-brand);font-size:12px;margin-left:4px;padding:0 5px}
+
+/* bottom tab (mobile) */
+nav.tab{display:none}
+@media (max-width:760px){
+  .gnb,.cart-btn{display:none}
+  nav.tab{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+  nav.tab a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;text-decoration:none;font-size:12px;color:var(--muted)}
+  nav.tab a svg{width:22px;height:22px}
+  nav.tab a[aria-current="page"]{color:var(--brand-deep);font-weight:700}
+  nav.tab a{position:relative}
+  nav.tab [data-cartcnt]{position:absolute;top:3px;left:calc(50% + 6px);background:var(--brand);color:var(--on-brand);font-size:10px;line-height:16px;min-width:16px;text-align:center;border-radius:8px;padding:0 4px}
+  main{padding-bottom:84px}
+  .logo b{font-size:18px}
+}
+
+main{min-height:70vh}
+section.view{padding-block:28px 56px}
+.eyebrow{font-size:13px;letter-spacing:.06em;color:var(--brand);font-weight:700}
+.lead{color:var(--muted);max-width:62ch}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;padding:12px 18px;font-weight:700;text-decoration:none;background:var(--brand);color:var(--on-brand)}
+.btn.ghost{background:transparent;color:var(--brand-deep);border:1.5px solid var(--brand)}
+.btn.quiet{background:var(--sunk);color:var(--fg)}
+.btn.small{padding:8px 12px;font-size:14px;border-radius:10px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-size:14px}
+.chip[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-deep);font-weight:700}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:6px;background:var(--sunk);color:var(--muted)}
+.tag.green{background:var(--brand-soft);color:var(--brand-deep)}
+.tag.warm{background:var(--warm-soft);color:var(--warm)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.price{font-weight:700;font-size:18px}
+.disclaim{font-size:13px;color:var(--muted);background:var(--sunk);border-radius:10px;padding:10px 12px}
+
+/* UX annotations */
+.uxn{display:none}
+body.ux-on .uxn{display:block;border:1.5px dashed var(--ux);background:var(--ux-soft);color:var(--fg);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.55;margin-block:10px}
+body.ux-on .uxn b{color:var(--ux)}
+.uxn .k{display:inline-block;font-weight:700;color:var(--ux);margin-right:6px}
+
+/* home */
+.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:32px;align-items:center}
+.hero h1{font-size:clamp(30px,4.6vw,48px);color:var(--brand-deep)}
+.hero .ph{border-radius:20px;overflow:hidden;aspect-ratio:4/3;max-width:100%}
+.hero .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.hero .cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.concern{margin-top:44px}
+.concern h2{font-size:24px}
+.concern .row{margin-top:14px}
+.band{margin-top:48px;display:grid;grid-template-columns:1fr 1.1fr;background:var(--brand-deep);color:var(--bg);border-radius:20px;overflow:hidden}
+.band img{width:100%;height:100%;object-fit:cover;display:block;min-height:260px}
+.band .txt{padding:32px;display:flex;flex-direction:column;gap:12px;justify-content:center}
+.band h2{font-size:28px;color:var(--bg)}
+.band .lead{color:var(--bg);opacity:.85}
+.band .btn{background:var(--bg);color:var(--brand-deep);align-self:flex-start}
+.band ul{margin:0;padding-left:18px;opacity:.92}
+.flow{margin-top:48px}
+.flow ol{list-style:none;margin:18px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;counter-reset:s}
+.flow li{counter-increment:s;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.flow li::before{content:"0" counter(s);font-weight:700;color:var(--brand);font-size:13px}
+.flow li b{display:block;margin:4px 0}
+.flow li span{color:var(--muted);font-size:14px}
+.split{margin-top:48px;display:grid;grid-template-columns:.8fr 1.2fr;gap:28px;align-items:center}
+.split .ph{border-radius:20px;overflow:hidden;aspect-ratio:3/4;max-height:460px;max-width:100%}
+.split .ph img{width:100%;height:100%;object-fit:cover;object-position:center 60%;display:block}
+footer{border-top:1px solid var(--line);padding-block:24px;color:var(--muted);font-size:13px}
+
+/* shop */
+.shop-head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px}
+.filters{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;text-decoration:none}
+.card .im{aspect-ratio:1/1;background:var(--sunk)}
+.card .im img{width:100%;height:100%;object-fit:cover;display:block}
+.card .bd{padding:14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.card .nm{font-weight:700}
+.card .why{font-size:13px;color:var(--brand-deep);background:var(--brand-soft);border-radius:8px;padding:6px 8px}
+.card .pr{margin-top:auto}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+
+/* detail */
+.detail{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+.detail .gal{border-radius:20px;overflow:hidden;aspect-ratio:1/1;background:var(--sunk);max-width:100%}
+.detail .gal img{width:100%;height:100%;object-fit:cover;display:block}
+.detail .info{display:flex;flex-direction:column;gap:16px;min-width:0}
+.detail h1{font-size:30px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+.seg{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{flex:1;border:0;background:var(--surface);padding:10px 8px;font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--brand);color:var(--on-brand);font-weight:700}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px}
+.qty button{border:0;background:transparent;width:36px;height:36px;font-size:18px}
+.qty span{min-width:28px;text-align:center}
+.check{display:flex;gap:10px;align-items:flex-start;border-radius:10px;padding:10px 12px;font-size:14px}
+.check.ok{background:var(--brand-soft);color:var(--brand-deep)}
+.check.warn{background:var(--warm-soft);color:var(--warm)}
+.back{display:inline-block;margin-bottom:16px;color:var(--muted);text-decoration:none;font-size:14px}
+
+/* box builder */
+.steps{display:flex;gap:6px;margin:6px 0 4px}
+.steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.steps i.on{background:var(--brand)}
+.q{display:flex;flex-direction:column;gap:10px}
+.q label.t{font-weight:700}
+.compo{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.compo li{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.compo li .dot{width:10px;height:10px;border-radius:50%;background:var(--brand);margin-top:7px;grid-row:span 2}
+.compo li small{color:var(--muted);font-size:13px}
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.plan{border:1.5px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);text-align:left}
+.plan[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft)}
+.plan b{display:block}
+.terms{font-size:14px;display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.terms li::before{content:"✓ ";color:var(--brand);font-weight:700}
+
+/* cart */
+.cart{display:grid;grid-template-columns:1.4fr .9fr;gap:24px;align-items:start}
+.line{display:grid;grid-template-columns:72px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.line img{width:72px;height:72px;border-radius:10px;object-fit:cover}
+.line .meta{min-width:0}
+.line .meta small{color:var(--muted);display:block}
+.sum{display:flex;flex-direction:column;gap:10px;position:sticky;top:84px}
+.sum .r{display:flex;justify-content:space-between}
+.sum .tot{font-size:20px;font-weight:700;border-top:1px solid var(--line);padding-top:10px}
+.linkbtn{border:0;background:none;color:var(--muted);text-decoration:underline;font-size:13px;padding:4px}
+
+/* record */
+.rec{display:grid;grid-template-columns:1fr 1.1fr;gap:20px;align-items:start}
+.petbar{display:flex;align-items:center;gap:14px}
+.petbar .av{width:56px;height:56px;border-radius:50%;background:var(--brand-soft);display:grid;place-items:center;font-family:var(--f-display);font-size:22px;color:var(--brand-deep)}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opts button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;font-size:14px}
+.opts button[aria-pressed="true"]{border-color:var(--brand);background:var(--brand);color:var(--on-brand);font-weight:700}
+.field{display:flex;flex-direction:column;gap:6px}
+.field>span{font-weight:700;font-size:14px}
+textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--surface);resize:vertical}
+.chart{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;height:150px;border-bottom:1px solid var(--line);background:repeating-linear-gradient(to top,transparent 0 49px,var(--line) 49px 50px)}
+.bar{display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.bar i{display:block;border-radius:6px 6px 0 0;background:var(--brand);opacity:.8}
+.bar.low i{background:var(--warm)}
+.bar.today i{opacity:1;outline:2px solid var(--brand-deep);outline-offset:1px}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;font-size:12px;color:var(--muted);text-align:center;margin-top:4px}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.ai{border-left:3px solid var(--brand);padding:4px 0 4px 14px;display:flex;flex-direction:column;gap:6px}
+.ai ul{margin:0;padding-left:18px}
+.report{white-space:pre-wrap;font-size:14px;background:var(--sunk);border-radius:10px;padding:14px;margin:0;font-family:var(--f-body)}
+.log{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.log li{display:flex;gap:10px;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:8px}
+.log li span:last-child{color:var(--muted);text-align:right}
+
+/* my */
+.my{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;align-items:start}
+.subhead{display:flex;gap:16px;align-items:center}
+.subhead img{width:88px;height:88px;border-radius:12px;object-fit:cover}
+.big{font-size:26px;font-family:var(--f-display);color:var(--brand-deep)}
+input[type=range]{width:100%;accent-color:var(--brand)}
+.endopts{display:grid;gap:10px}
+.endopt{border:1.5px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);text-align:left}
+.endopt[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft)}
+.endopt b{display:block}
+.endopt small{color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));background:var(--brand-deep);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:500;z-index:40;max-width:calc(100% - 32px)}
+.stack{display:flex;flex-direction:column;gap:14px}
+.h2{font-size:22px}
+
+@media (max-width:860px){
+  .hero,.band,.split,.detail,.cart,.rec,.my{grid-template-columns:1fr}
+  .flow ol{grid-template-columns:1fr 1fr}
+  .split .ph{aspect-ratio:4/3}
+  .sum{position:static}
+}
+@media (max-width:420px){.plans{grid-template-columns:1fr}.flow ol{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:no-preference){.view{animation:in .25s ease-out}@keyframes in{from{transform:translateY(6px)}to{transform:none}}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#home"><img src="img/logo.jpg" alt=""><b>Always Pet</b></a>
+    <nav class="gnb" aria-label="주요 메뉴">
+      <a href="#shop" data-nav="shop">쇼핑</a>
+      <a href="#box" data-nav="box">케어 박스</a>
+      <a href="#record" data-nav="record">건강 기록</a>
+      <a href="#my" data-nav="my">구독 관리</a>
+    </nav>
+    <div class="tools">
+      <button class="ux-toggle" id="uxToggle" aria-pressed="false" title="화면마다 과제1 고객 불편을 어떻게 해결했는지 보여줍니다">UX 개선 포인트</button>
+      <a class="cart-btn" href="#cart" data-nav="cart">장바구니<span class="cnt num" data-cartcnt>0</span></a>
+    </div>
+  </div>
+</header>
+
+<main id="app" class="wrap"></main>
+
+<nav class="tab" aria-label="하단 메뉴">
+  <a href="#home" data-nav="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>홈</a>
+  <a href="#shop" data-nav="shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 8h14l-1 12H6zM9 8a3 3 0 016 0"/></svg>쇼핑</a>
+  <a href="#record" data-nav="record"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V9M10 19V5M16 19v-7M21 19H3"/></svg>기록</a>
+  <a href="#my" data-nav="my"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18M8 3v4M16 3v4"/></svg>구독</a>
+  <a href="#cart" data-nav="cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.5 12h12L22 7H6.2"/></svg>장바구니<span class="num" data-cartcnt>0</span></a>
+</nav>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+"use strict";
+var won = function(n){return n.toLocaleString("ko-KR")+"원";};
+var esc = function(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});};
+
+/* ---------- 데이터 (가격은 과제1 기획 가안) ---------- */
+var CONCERNS = [
+  {id:"joint", label:"산책을 힘들어해요", short:"관절·보행"},
+  {id:"appetite", label:"간식을 잘 안 먹어요", short:"식욕"},
+  {id:"digest", label:"배변이 불규칙해요", short:"소화·배변"},
+  {id:"skin", label:"털·피부가 거칠어요", short:"피부·위생"},
+  {id:"slip", label:"집에서 자주 미끄러져요", short:"생활환경"}
+];
+var P = [
+  {id:"carebox", cat:"box", name:"시니어 맞춤 케어 박스", img:"box.jpg", price:29900, sub:true,
+   desc:"아이의 나이·체중·관심사에 맞춰 간식, 영양 보조 제품, 케어 안내서를 매달 구성해 보내드려요.",
+   concerns:["joint","appetite","digest","skin"], main:[], why:{joint:"관절 케어 구성 선택 가능",appetite:"기호성 높은 소포장 간식 포함",digest:"소화가 편한 간식으로 구성",skin:"저자극 위생용품 포함 (프리미엄)"}},
+  {id:"jerky", cat:"treat", name:"닭가슴살 육포", img:"treats.jpg", price:8900, sub:true, trial:3900,
+   desc:"얇게 펴서 말려 이가 약한 아이도 잘게 찢어 먹일 수 있어요. 국내산 닭가슴살 단일 원료.",
+   spec:{"주원료":"닭가슴살 100%","중량":"80g","급여":"체중 5kg 기준 하루 2~3조각","식감":"얇고 부드러움"},
+   concerns:["appetite"], main:["닭고기"], why:{appetite:"단일 원료라 기호 확인이 쉬워요"}},
+  {id:"salmon", cat:"treat", name:"연어 스틱", img:"treats.jpg", price:9900, sub:true, trial:3900,
+   desc:"연어를 부드러운 스틱으로 만들었어요. 손으로 쉽게 잘라 양 조절이 편해요.",
+   spec:{"주원료":"연어 92%, 고구마 전분","중량":"70g","급여":"체중 5kg 기준 하루 1~2개","식감":"말랑함"},
+   concerns:["appetite","skin"], main:["연어"], why:{appetite:"향이 강해 식욕이 떨어진 아이에게 시도해 보기 좋아요",skin:"오메가-3 함유 원료(연어)"}},
+  {id:"potato", cat:"treat", name:"고구마 큐브", img:"treats.jpg", price:7900, sub:true, trial:2900,
+   desc:"한입 크기 큐브로 쪄서 말렸어요. 식이섬유가 들어 있는 곡물 대체 간식이에요.",
+   spec:{"주원료":"국내산 고구마 100%","중량":"100g","급여":"체중 5kg 기준 하루 3~4개","식감":"쫀득함"},
+   concerns:["digest"], main:["고구마"], why:{digest:"식이섬유가 있는 단일 원료 간식"}},
+  {id:"mat", cat:"living", name:"미끄럼 방지 매트", img:"mat.jpg", price:39000,
+   desc:"마루 위에서 다리가 벌어지지 않도록 잡아주는 쿠션 매트예요. 물세탁 가능.",
+   spec:{"크기":"120×90cm","두께":"8mm","소재":"폴리에스터, 논슬립 TPR","세탁":"30℃ 이하 물세탁"},
+   concerns:["slip","joint"], main:[], why:{slip:"미끄러운 바닥에서 보행을 도와요",joint:"관절에 가는 충격을 줄여요"}},
+  {id:"bed", cat:"living", name:"도넛 쿠션 침대", img:"bed.jpg", price:49000,
+   desc:"테두리가 낮아 노령견·노령묘도 쉽게 드나들어요. 커버 분리 세탁.",
+   spec:{"크기":"지름 70cm","입구 높이":"9cm","소재":"부클레 원단, 극세사","세탁":"커버 분리 세탁"},
+   concerns:["joint","slip"], main:[], why:{joint:"입구가 낮아 관절 부담이 적어요",slip:"바닥 미끄럼 방지 처리"}},
+  {id:"brush", cat:"living", name:"부드러운 핀 브러시", img:"brush.jpg", price:15000,
+   desc:"끝이 둥근 핀이라 얇아진 피부에도 자극이 적어요.",
+   spec:{"크기":"21×10cm","핀":"끝 둥근 스테인리스","손잡이":"미끄럼 방지 실리콘"},
+   concerns:["skin"], main:[], why:{skin:"피부 자극이 적은 둥근 핀"}},
+  {id:"shampoo", cat:"living", name:"마일드 저자극 샴푸", img:"shampoo.jpg", price:16900, sub:true,
+   desc:"향을 줄인 약산성 샴푸예요. 노령 동물의 건조한 피부를 고려했어요.",
+   spec:{"용량":"1,000ml","pH":"약산성","향":"무향에 가까운 저향"},
+   concerns:["skin"], main:[], why:{skin:"약산성·저향 처방"}},
+  {id:"harness", cat:"living", name:"보행 보조 하네스", img:"harness.jpg", price:32000,
+   desc:"등 손잡이로 계단이나 차에 오를 때 몸을 살짝 받쳐줄 수 있어요.",
+   spec:{"사이즈":"S / M / L","소재":"에어메쉬, 나일론 웨빙","특징":"등 손잡이, 2점 조절"},
+   concerns:["joint"], main:[], why:{joint:"계단·차량 승하차를 보조해요"}}
+];
+var byId = function(id){for(var i=0;i<P.length;i++){if(P[i].id===id)return P[i];}return null;};
+
+/* ---------- 상태 ---------- */
+var S = {
+  cart: [], // {key,id,name,img,price,qty,mode,cycle,note}
+  pet: {name:"보리", species:"dog", age:"10세 이상", weight:"5kg 미만", concerns:["appetite","joint"], current:["닭고기"], meds:""},
+  filter: {concern:null, cat:"all"},
+  box: {step:0, plan:"basic"},
+  sub: {active:true, next:"2026-11-20", cycleWeeks:4, remain:60, ended:null, endChoice:null, plan:"basic"},
+  logs: [
+    {d:"11/05", meal:2, walk:"평소", poop:"정상", memo:""},
+    {d:"11/06", meal:2, walk:"평소", poop:"정상", memo:""},
+    {d:"11/07", meal:2, walk:"줄었음", poop:"정상", memo:"계단 앞에서 멈춤"},
+    {d:"11/08", meal:1, walk:"줄었음", poop:"횟수 적음", memo:""},
+    {d:"11/09", meal:1, walk:"줄었음", poop:"정상", memo:"간식 반만 먹음"},
+    {d:"11/10", meal:1, walk:"많이 줄었음", poop:"정상", memo:""}
+  ],
+  today: {meal:null, walk:null, poop:null, water:null, memo:""},
+  reportOpen:false, ordered:null
+};
+try{
+  var saved = JSON.parse(localStorage.getItem("ap-proto")||"null");
+  if(saved && saved.v===1){ S.cart = saved.cart||[]; if(saved.ux) document.body.classList.add("ux-on"); }
+}catch(e){}
+function persist(){ try{ localStorage.setItem("ap-proto", JSON.stringify({v:1, cart:S.cart, ux:document.body.classList.contains("ux-on")})); }catch(e){} }
+
+function toast(msg){ var t=document.getElementById("toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(function(){t.hidden=true;},2200); }
+function ux(k, text){ return '<div class="uxn"><span class="k">UX '+k+'</span>'+text+'</div>'; }
+function cartCount(){ return S.cart.reduce(function(a,c){return a+c.qty;},0); }
+function addCart(item){
+  var ex = S.cart.filter(function(c){return c.key===item.key;})[0];
+  if(ex) ex.qty += item.qty; else S.cart.push(item);
+  persist(); syncCount(); toast("장바구니에 담았어요 · "+item.name);
+}
+function syncCount(){ var n=cartCount(); document.querySelectorAll("[data-cartcnt]").forEach(function(el){el.textContent=n;}); }
+
+/* ---------- 화면 ---------- */
+var V = {};
+
+V.home = function(){
+  return '<section class="view">'+
+  '<div class="hero">'+
+    '<div class="stack">'+
+      '<span class="eyebrow">노령 반려동물 케어 커머스</span>'+
+      '<h1>늘 곁에,<br>더 오래 건강하게</h1>'+
+      '<p class="lead">고르고, 기록하고, 조정하는 일을 한곳에서. 일곱 살이 넘은 아이에게 맞는 돌봄을 매일 실천하기 쉽게 만들었어요.</p>'+
+      '<div class="cta"><a class="btn" href="#box">우리 아이 케어 박스 만들기</a><a class="btn ghost" href="#record">1분 기록 해보기</a></div>'+
+    '</div>'+
+    '<div class="ph"><img src="img/walk.jpg" alt="올웨이즈 펫 하네스를 착용하고 산책하는 골든 리트리버"></div>'+
+  '</div>'+
+  '<div class="concern">'+
+    '<h2>요즘 어떤 변화가 보이나요?</h2>'+
+    '<p class="lead">상품 종류가 아니라 아이의 변화로 찾아보세요. 고르면 관련 상품과 추천 이유를 함께 보여드려요.</p>'+
+    '<div class="row">'+CONCERNS.map(function(c){return '<button class="chip" data-go-concern="'+c.id+'">'+esc(c.label)+'</button>';}).join("")+'</div>'+
+    ux("① 목적별 탐색","과제1 고객여정 <b>01 탐색</b>의 불편(정보가 흩어져 있고 광고와 구분이 어려움)을 해결해요. 카테고리 대신 보호자가 실제로 관찰한 변화로 진입합니다.")+
+  '</div>'+
+  '<div class="band">'+
+    '<img src="img/box.jpg" alt="올웨이즈 펫 시니어 케어 박스 구성품">'+
+    '<div class="txt">'+
+      '<span class="eyebrow" style="color:var(--bg);opacity:.8">매달 받는 핵심 상품</span>'+
+      '<h2>시니어 맞춤 케어 박스</h2>'+
+      '<p class="lead">질문 4개면 구성이 끝나요. 왜 이 구성인지도 함께 알려드려요.</p>'+
+      '<ul><li>기본 월 29,900원 · 프리미엄 월 39,900원</li><li>남은 양에 맞춰 배송일 변경</li><li>건너뛰기·해지 위약금 없음</li></ul>'+
+      '<a class="btn" href="#box">구성 시작하기</a>'+
+    '</div>'+
+  '</div>'+
+  '<div class="flow">'+
+    '<h2 class="h2">구매 뒤에도 이어지는 돌봄</h2>'+
+    '<ol>'+
+      '<li><b>탐색</b><span>아이의 변화로 상품을 찾고 추천 이유를 확인해요.</span></li>'+
+      '<li><b>구매</b><span>짧은 질문과 소량 체험으로 부담 없이 시작해요.</span></li>'+
+      '<li><b>관리</b><span>식사·활동·배변을 탭 몇 번으로 기록해요.</span></li>'+
+      '<li><b>조정</b><span>상담 리포트를 만들고 배송을 소비 속도에 맞춰요.</span></li>'+
+    '</ol>'+
+  '</div>'+
+  '<div class="split">'+
+    '<div class="ph"><img src="img/app.jpg" alt="보호자가 휴대폰으로 반려견의 건강 기록을 확인하는 모습"></div>'+
+    '<div class="stack">'+
+      '<span class="eyebrow">AI 건강 기록</span>'+
+      '<h2 class="h2">진단하지 않아요.<br>변화를 놓치지 않게 정리해요.</h2>'+
+      '<p class="lead">하루 1분, 버튼 몇 개로 남긴 기록을 AI가 주간 단위로 요약하고 병원에서 물어볼 질문을 정리해 드려요.</p>'+
+      '<div><a class="btn ghost" href="#record">이번 주 요약 보기</a></div>'+
+      ux("④ AI의 역할과 한계","AI는 기록 구조화·주간 요약·상담 준비만 돕고 질병 진단, 통증 판정은 하지 않는다는 원칙을 첫 화면부터 밝혀 신뢰를 만듭니다.")+
+    '</div>'+
+  '</div>'+
+  '</section>';
+};
+
+V.shop = function(){
+  var f=S.filter;
+  var list=P.filter(function(p){ return (f.cat==="all"||p.cat===f.cat) && (!f.concern||p.concerns.indexOf(f.concern)>-1); });
+  var cats=[["all","전체"],["box","케어 박스"],["treat","간식·식품"],["living","생활 케어 용품"]];
+  var cn = f.concern ? CONCERNS.filter(function(c){return c.id===f.concern;})[0] : null;
+  return '<section class="view">'+
+  '<div class="shop-head"><div><span class="eyebrow">쇼핑</span><h1 class="h2" style="font-size:28px">'+(cn?esc(cn.label)+' 아이를 위한 상품':'전체 상품')+'</h1></div>'+
+  '<span class="num" style="color:var(--muted)">'+list.length+'개</span></div>'+
+  '<div class="filters">'+
+    '<div class="row" role="group" aria-label="변화로 찾기">'+CONCERNS.map(function(c){return '<button class="chip" data-concern="'+c.id+'" aria-pressed="'+(f.concern===c.id)+'">'+esc(c.short)+'</button>';}).join("")+'</div>'+
+    '<div class="row" role="group" aria-label="상품 종류">'+cats.map(function(c){return '<button class="chip" data-cat="'+c[0]+'" aria-pressed="'+(f.cat===c[0])+'">'+c[1]+'</button>';}).join("")+'</div>'+
+  '</div>'+
+  ux("② 추천 이유 표시","변화를 고르면 카드마다 <b>왜 이 상품이 맞는지</b> 한 줄로 보여줘요. 과제1에서 정의한 지표 '추천 이해도'를 높이기 위한 장치예요.")+
+  (list.length? '<div class="grid">'+list.map(function(p){
+    return '<a class="card" href="#'+(p.cat==="box"?"box":"p-"+p.id)+'">'+
+      '<div class="im"><img src="img/'+p.img+'" alt="'+esc(p.name)+'" loading="lazy"></div>'+
+      '<div class="bd"><div class="row" style="gap:4px">'+p.concerns.map(function(c){var o=CONCERNS.filter(function(x){return x.id===c;})[0];return '<span class="tag">'+o.short+'</span>';}).join("")+'</div>'+
+      '<span class="nm">'+esc(p.name)+'</span>'+
+      (f.concern&&p.why[f.concern]?'<span class="why">추천 이유 · '+esc(p.why[f.concern])+'</span>':'')+
+      '<span class="pr"><span class="price num">'+won(p.price)+'</span>'+(p.cat==="box"?' <small style="color:var(--muted)">/월</small>':'')+(p.trial?' <span class="tag warm">소량 체험 '+won(p.trial)+'</span>':'')+'</span>'+
+      '</div></a>';
+  }).join("")+'</div>' : '<div class="empty">이 조건에 맞는 상품이 아직 없어요. 다른 변화를 선택해 보세요.</div>')+
+  '</section>';
+};
+
+function overlap(p){
+  return p.main.filter(function(m){return S.pet.current.indexOf(m)>-1;});
+}
+V.product = function(id){
+  var p=byId(id); if(!p) return V.shop();
+  var st = V.product.st && V.product.st.id===id ? V.product.st : (V.product.st={id:id, mode:p.trial?"trial":"once", qty:1, cycle:4});
+  var ov=overlap(p);
+  var price = st.mode==="trial"? p.trial : (st.mode==="sub"? Math.round(p.price*0.9/100)*100 : p.price);
+  return '<section class="view">'+
+  '<a class="back" href="#shop">← 상품 목록</a>'+
+  '<div class="detail">'+
+    '<div class="gal"><img src="img/'+p.img+'" alt="'+esc(p.name)+'"></div>'+
+    '<div class="info">'+
+      '<div><span class="eyebrow">'+(p.cat==="treat"?"시니어 간식":"생활 케어 용품")+'</span><h1>'+esc(p.name)+'</h1></div>'+
+      '<p>'+esc(p.desc)+'</p>'+
+      '<dl class="kv">'+Object.keys(p.spec).map(function(k){return '<dt>'+esc(k)+'</dt><dd>'+esc(p.spec[k])+'</dd>';}).join("")+'</dl>'+
+      (p.main.length? (ov.length?
+        '<div class="check warn">⚠ <span><b>'+esc(S.pet.name)+'</b>가 지금 먹는 <b>'+esc(ov.join(", "))+'</b> 원료와 겹쳐요. 하루 급여량을 나눠 주세요.</span></div>':
+        '<div class="check ok">✓ <span><b>'+esc(S.pet.name)+'</b>가 지금 먹는 제품과 겹치는 주원료가 없어요.</span></div>'):'')+
+      ux("③ 성분 중복 확인","페르소나 김서윤·이진혁의 공통 걱정인 <b>성분 중복</b>을 상세 화면에서 바로 확인해요. 등록된 급여 정보와 주원료를 비교합니다.")+
+      '<div class="seg" role="group" aria-label="구매 방식">'+
+        (p.trial?'<button data-mode="trial" aria-pressed="'+(st.mode==="trial")+'">소량 체험</button>':'')+
+        '<button data-mode="once" aria-pressed="'+(st.mode==="once")+'">한 번 구매</button>'+
+        (p.sub?'<button data-mode="sub" aria-pressed="'+(st.mode==="sub")+'">정기배송 10%↓</button>':'')+
+      '</div>'+
+      (st.mode==="trial"?'<p class="disclaim">처음이라면 3회 분량 체험팩으로 기호부터 확인해 보세요. 잘 먹으면 정기배송으로 바꿀 때 체험 금액만큼 할인돼요.</p>':'')+
+      (st.mode==="sub"?'<div class="field"><span>배송 주기</span><div class="opts">'+[2,4,6].map(function(w){return '<button data-cycle="'+w+'" aria-pressed="'+(st.cycle===w)+'">'+w+'주마다</button>';}).join("")+'</div><p class="disclaim">언제든 건너뛰기·주기 변경·해지할 수 있어요. 위약금은 없어요.</p></div>':'')+
+      ux("⑤ 소량 체험 · 명확한 조건","과제1 여정 <b>02 구매</b>의 부담(긴 설문, 불명확한 조건)을 줄이려고 체험팩과 구독 조건을 결제 전에 보여줘요.")+
+      '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+
+        '<div class="qty"><button data-q="-1" aria-label="수량 줄이기">−</button><span class="num">'+st.qty+'</span><button data-q="1" aria-label="수량 늘리기">+</button></div>'+
+        '<span class="price num" style="font-size:22px">'+won(price*st.qty)+'</span>'+
+      '</div>'+
+      '<button class="btn" data-add>장바구니 담기</button>'+
+    '</div>'+
+  '</div></section>';
+};
+
+/* 케어 박스 구성 */
+function boxCompo(){
+  var pet=S.pet, out=[];
+  var cat = pet.species==="cat";
+  out.push({n:"케어 안내서", r:esc(pet.name)+"의 나이("+pet.age+")에 맞춘 이번 달 관찰 포인트 1장"});
+  if(pet.concerns.indexOf("appetite")>-1) out.push({n:(pet.current.indexOf("닭고기")>-1?"연어 스틱 소포장":"닭가슴살 육포 소포장"), r:"식욕이 떨어졌다고 해서 향이 강한 간식을 골랐어요"+(pet.current.indexOf("닭고기")>-1?". 지금 닭고기 간식을 먹고 있어 원료를 바꿨어요":"")});
+  if(pet.concerns.indexOf("digest")>-1) out.push({n:"고구마 큐브 소포장", r:"배변이 불규칙하다고 해서 식이섬유가 있는 단일 원료 간식을 넣었어요"});
+  if(pet.concerns.indexOf("joint")>-1) out.push({n:cat?"캣 관절 영양 파우더 (14일분)":"관절 영양 츄 (14일분)", r:"산책·활동이 줄었다고 해서 넣었어요. 영양 보조 제품이며 치료 목적이 아니에요"});
+  if(pet.concerns.indexOf("skin")>-1) out.push({n:"저자극 물티슈", r:"털·피부가 거칠다고 해서 넣었어요"});
+  if(pet.concerns.indexOf("slip")>-1) out.push({n:"발바닥 미끄럼 방지 패드", r:"집에서 미끄러진다고 해서 넣었어요"});
+  if(S.box.plan==="premium") out.push({n:"마일드 저자극 샴푸 (소용량)", r:"프리미엄 구성에 포함되는 위생 케어 상품이에요"});
+  if(out.length<3) out.push({n:"시니어 기본 간식 1종", r:"관심사를 고르지 않아 부드러운 기본 간식을 넣었어요"});
+  return out;
+}
+V.box = function(){
+  var b=S.box, pet=S.pet, steps=4;
+  var body="";
+  if(b.step===0){
+    body='<div class="q"><label class="t">어떤 아이인가요?</label>'+
+      '<div class="opts">'+[["dog","강아지"],["cat","고양이"]].map(function(o){return '<button data-pet="species" data-v="'+o[0]+'" aria-pressed="'+(pet.species===o[0])+'">'+o[1]+'</button>';}).join("")+'</div>'+
+      '<label class="t">나이</label><div class="opts">'+["7~9세","10세 이상"].map(function(o){return '<button data-pet="age" data-v="'+o+'" aria-pressed="'+(pet.age===o)+'">'+o+'</button>';}).join("")+'</div>'+
+      '<label class="t">몸무게</label><div class="opts">'+["5kg 미만","5~10kg","10kg 이상"].map(function(o){return '<button data-pet="weight" data-v="'+o+'" aria-pressed="'+(pet.weight===o)+'">'+o+'</button>';}).join("")+'</div></div>';
+  } else if(b.step===1){
+    body='<div class="q"><label class="t">요즘 보이는 변화를 골라 주세요 <small style="color:var(--muted);font-weight:400">(최대 2개)</small></label>'+
+      '<div class="opts">'+CONCERNS.map(function(c){return '<button data-concern-pick="'+c.id+'" aria-pressed="'+(pet.concerns.indexOf(c.id)>-1)+'">'+esc(c.label)+'</button>';}).join("")+'</div></div>';
+  } else if(b.step===2){
+    body='<div class="q"><label class="t">지금 먹고 있는 간식·영양제의 주원료가 있나요?</label>'+
+      '<div class="opts">'+["닭고기","연어","고구마","오메가-3","글루코사민"].map(function(o){return '<button data-current="'+o+'" aria-pressed="'+(pet.current.indexOf(o)>-1)+'">'+o+'</button>';}).join("")+'</div>'+
+      '<label class="t" for="meds">복용 중인 약 <small style="color:var(--muted);font-weight:400">(선택)</small></label>'+
+      '<textarea id="meds" placeholder="예: 심장약 1일 2회">'+esc(pet.meds)+'</textarea></div>';
+  } else {
+    var compo=boxCompo();
+    body='<div class="q"><label class="t">'+esc(pet.name)+'에게 이렇게 구성했어요</label>'+
+      '<ul class="compo">'+compo.map(function(c){return '<li><span class="dot"></span><b>'+esc(c.n)+'</b><small>왜? '+c.r+'</small></li>';}).join("")+'</ul>'+
+      (pet.meds.trim()? '<p class="disclaim">복용 중인 약('+esc(pet.meds.trim())+')이 있어요. 영양 보조 제품은 수의사와 상의한 뒤 급여해 주세요.</p>' :
+        '<p class="disclaim"><b>확인하지 못한 정보</b> · 복용 중인 약을 입력하지 않았어요. 약을 먹고 있다면 영양 보조 제품은 수의사와 상의한 뒤 급여해 주세요.</p>')+
+      ux("② 추천 이유 · 미확인 정보 표시","구성품마다 '왜?'를 붙이고, AI가 모르는 정보(복용 약)는 숨기지 않고 알려요. 과제1 비교 슬라이드의 <b>'추천 이유와 미확인 정보를 표시'</b>를 화면으로 옮겼어요.")+
+      '<label class="t">플랜</label>'+
+      '<div class="plans">'+
+        '<button class="plan" data-plan="basic" aria-pressed="'+(b.plan==="basic")+'"><b>기본</b><span class="price num">월 29,900원</span><br><small>간식 2종 + 영양 보조 1종 + 안내서</small></button>'+
+        '<button class="plan" data-plan="premium" aria-pressed="'+(b.plan==="premium")+'"><b>프리미엄</b><span class="price num">월 39,900원</span><br><small>기본 구성 + 위생 케어 + 상담 리포트 출력본</small></button>'+
+      '</div>'+
+      '<ul class="terms"><li>매달 20일 결제, 23일 전후 도착</li><li>남은 양에 맞춰 배송일을 앞당기거나 미룰 수 있어요</li><li>건너뛰기·해지 위약금 없음, 마이페이지에서 2번 탭으로 처리</li></ul>'+
+      '</div>';
+  }
+  return '<section class="view"><div class="detail">'+
+    '<div class="stack"><div class="gal"><img src="img/box.jpg" alt="시니어 맞춤 케어 박스"></div>'+
+      ux("⑤ 짧은 질문","긴 설문 대신 <b>질문 4단계</b>로 끝내요. 첫 질문은 버튼 선택만, 복용 약은 선택 입력이에요.")+'</div>'+
+    '<div class="info">'+
+      '<div><span class="eyebrow">시니어 맞춤 케어 박스</span><h1>'+(b.step<3?'질문 '+(b.step+1)+' / '+steps:'구성 확인')+'</h1></div>'+
+      '<div class="steps">'+[0,1,2,3].map(function(i){return '<i class="'+(i<=b.step?"on":"")+'"></i>';}).join("")+'</div>'+
+      body+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap">'+
+        (b.step>0?'<button class="btn quiet" data-step="-1">이전</button>':'')+
+        (b.step<3?'<button class="btn" data-step="1">다음</button>':'<button class="btn" data-addbox>정기배송 장바구니 담기</button>')+
+      '</div>'+
+    '</div></div></section>';
+};
+
+V.cart = function(){
+  if(S.ordered){
+    var o=S.ordered;
+    return '<section class="view"><div class="panel stack" style="max-width:560px;margin:0 auto;text-align:center">'+
+      '<img src="img/logo.jpg" alt="" style="width:72px;height:72px;border-radius:16px;margin:0 auto">'+
+      '<h1 class="h2">주문이 접수됐어요</h1>'+
+      '<p class="lead" style="margin:0 auto">주문번호 <b class="num">'+o.no+'</b> · 결제 예정 <b class="num">'+won(o.total)+'</b></p>'+
+      (o.hasSub?'<p class="disclaim">정기배송은 <b>구독 관리</b>에서 배송일 변경·건너뛰기·해지를 할 수 있어요.</p>':'')+
+      '<p class="disclaim">프로토타입 화면이라 실제 결제는 이뤄지지 않아요.</p>'+
+      '<div class="row" style="justify-content:center"><a class="btn" href="#record">첫 기록 남기기</a><a class="btn ghost" href="#my">구독 관리 보기</a></div>'+
+    '</div></section>';
+  }
+  if(!S.cart.length) return '<section class="view"><div class="empty"><h1 class="h2">장바구니가 비어 있어요</h1><p style="margin:10px 0 18px">아이의 변화로 필요한 상품을 찾아보세요.</p><a class="btn" href="#shop">상품 보러 가기</a></div></section>';
+  var sum=S.cart.reduce(function(a,c){return a+c.price*c.qty;},0);
+  var ship= sum>=30000?0:3000;
+  return '<section class="view"><h1 class="h2" style="font-size:28px;margin-bottom:12px">장바구니</h1><div class="cart">'+
+    '<div>'+S.cart.map(function(c,i){
+      return '<div class="line"><img src="img/'+c.img+'" alt=""><div class="meta"><b>'+esc(c.name)+'</b><small>'+esc(c.note)+'</small>'+
+        '<div class="qty" style="margin-top:6px"><button data-cq="'+i+'" data-d="-1" aria-label="수량 줄이기">−</button><span class="num">'+c.qty+'</span><button data-cq="'+i+'" data-d="1" aria-label="수량 늘리기">+</button></div></div>'+
+        '<div style="text-align:right"><b class="num">'+won(c.price*c.qty)+'</b><br><button class="linkbtn" data-rm="'+i+'">삭제</button></div></div>';
+    }).join("")+'</div>'+
+    '<aside class="panel sum">'+
+      '<div class="r"><span>상품 금액</span><span class="num">'+won(sum)+'</span></div>'+
+      '<div class="r"><span>배송비</span><span class="num">'+(ship?won(ship):"무료")+'</span></div>'+
+      (ship?'<small style="color:var(--muted)">'+won(30000-sum)+' 더 담으면 무료 배송</small>':'')+
+      '<div class="r tot"><span>결제 예정</span><span class="num">'+won(sum+ship)+'</span></div>'+
+      (S.cart.some(function(c){return c.mode==="sub";})?'<p class="disclaim">정기배송 상품은 다음 결제일 3일 전에 알림을 보내드려요. 위약금 없이 언제든 해지할 수 있어요.</p>':'')+
+      ux("⑤ 조건 명확화","정기 결제 조건과 해지 방법을 결제 버튼 바로 위에 둬요. 다크패턴(숨은 자동결제)을 피하는 설계예요.")+
+      '<button class="btn" data-order>주문하기</button>'+
+    '</aside></div></section>';
+};
+
+/* 기록 */
+var MEAL_LABEL=["거의 안 먹음","절반","잘 먹음"];
+function weekData(){
+  var saved=S.logs.length&&S.logs[S.logs.length-1].d==="11/11";
+  var d=S.logs.slice(saved?-7:-6).map(function(l){return {d:l.d, meal:l.meal};});
+  if(saved){ d[d.length-1].d="오늘"; d[d.length-1].today=true; }
+  else d.push({d:"오늘", meal:S.today.meal, today:true});
+  return d;
+}
+function aiSummary(){
+  var logs=S.logs.concat(S.today.meal!==null?[{meal:S.today.meal,walk:S.today.walk||"",poop:S.today.poop||""}]:[]);
+  var first=logs.slice(0,3), last=logs.slice(-3);
+  var avg=function(a){return a.reduce(function(s,x){return s+x.meal;},0)/a.length;};
+  var pts=[];
+  if(avg(last)<avg(first)) pts.push("식사량이 주 초반보다 줄었어요. 최근 3일 중 "+last.filter(function(x){return x.meal<2;}).length+"일은 절반 이하로 먹었어요.");
+  var lowWalk=logs.filter(function(x){return /줄었음/.test(x.walk||"");}).length;
+  if(lowWalk) pts.push("산책·활동이 평소보다 줄었다고 기록한 날이 "+lowWalk+"일이에요.");
+  var memos=S.logs.filter(function(l){return l.memo;}).map(function(l){return l.d+" '"+l.memo+"'";});
+  if(memos.length) pts.push("메모: "+memos.join(", "));
+  var ask=[];
+  if(S.today.water===null) ask.push("물 마시는 양은 평소와 비슷했나요?");
+  if(!S.logs.some(function(l){return /계단|다리|절뚝/.test(l.memo);})) ask.push("걸을 때 특정 다리를 아껴 쓰는 모습이 있었나요?"); else ask.push("계단 앞에서 멈춘 건 처음인가요, 전에도 있었나요?");
+  return {pts:pts, ask:ask};
+}
+V.record = function(){
+  var t=S.today, w=weekData(), sm=aiSummary(), pet=S.pet;
+  var opt=function(key, arr){return '<div class="opts">'+arr.map(function(o){var v=(key==="meal")?arr.indexOf(o):o;return '<button data-today="'+key+'" data-v="'+esc(String(v))+'" aria-pressed="'+(t[key]===v)+'">'+esc(key==="meal"?MEAL_LABEL[v]:o)+'</button>';}).join("")+'</div>';};
+  var report = esc(pet.name)+" (말티즈 · "+pet.age+" · "+pet.weight+")\n상담 준비 메모 · 11/05~오늘 기록 기준\n\n[관찰된 변화]\n"+sm.pts.map(function(p){return "· "+p;}).join("\n")+"\n\n[수의사에게 물어볼 질문]\n· 식사량이 줄어든 게 나이 때문인지, 확인해 볼 검사가 있을까요?\n· 산책을 힘들어하는데 관절 상태를 확인해 볼 수 있을까요?\n· 지금 먹는 간식(닭고기)과 영양제를 계속 줘도 될까요?\n\n※ 보호자가 기록한 내용을 정리한 것이며 진단이 아닙니다.";
+  return '<section class="view">'+
+  '<div class="petbar" style="margin-bottom:18px"><div class="av">보</div><div><h1 class="h2">'+esc(pet.name)+'의 건강 기록</h1><span style="color:var(--muted);font-size:14px">말티즈 · '+pet.age+' · '+pet.weight+'</span></div></div>'+
+  '<div class="rec">'+
+    '<div class="panel stack">'+
+      '<h2 class="h2" style="font-size:19px">오늘 기록 <small style="color:var(--muted);font-family:var(--f-body);font-size:13px">탭 3번이면 끝나요</small></h2>'+
+      '<div class="field"><span>식사량</span>'+opt("meal",[0,1,2])+'</div>'+
+      '<div class="field"><span>산책·활동</span>'+opt("walk",["평소","줄었음","많이 줄었음"])+'</div>'+
+      '<div class="field"><span>배변</span>'+opt("poop",["정상","무름","변비","횟수 적음"])+'</div>'+
+      '<div class="field"><span>물 마시는 양 <small style="color:var(--muted);font-weight:400">(AI가 물어본 항목)</small></span>'+opt("water",["평소","많음","적음"])+'</div>'+
+      '<div class="field"><label for="memo"><span style="font-weight:700;font-size:14px">메모 (선택)</span></label><textarea id="memo" placeholder="예: 소파에 못 올라가고 앞에서 기다림">'+esc(t.memo)+'</textarea></div>'+
+      '<button class="btn" data-save '+(t.meal===null||!t.walk||!t.poop?"disabled":"")+'>오늘 기록 저장</button>'+
+      ux("⑥ 기록 피로 줄이기","과제1 여정 <b>03 관리</b>의 '기록 피로'를 줄이려고 자유 서술 대신 버튼 선택을 기본으로 했어요. 메모는 선택이고, AI가 빠진 항목만 추가로 물어봐요.")+
+    '</div>'+
+    '<div class="stack">'+
+      '<div class="panel stack">'+
+        '<h2 class="h2" style="font-size:19px">이번 주 식사량</h2>'+
+        '<div><div class="chart" role="img" aria-label="최근 7일 식사량 막대 그래프">'+w.map(function(x){var v=x.meal===null?0:x.meal+1;return '<div class="bar '+(x.meal!==null&&x.meal<2?"low ":"")+(x.today?"today":"")+'"><i style="height:'+(v*50)+'px" title="'+(x.meal===null?"기록 전":MEAL_LABEL[x.meal])+'"></i></div>';}).join("")+'</div>'+
+        '<div class="days num">'+w.map(function(x){return '<span>'+x.d+'</span>';}).join("")+'</div>'+
+        '<div class="legend"><span><i style="background:var(--brand)"></i>잘 먹음</span><span><i style="background:var(--warm)"></i>절반 이하</span><span>칸 높이: 거의 안 먹음 · 절반 · 잘 먹음</span></div></div>'+
+      '</div>'+
+      '<div class="panel stack">'+
+        '<h2 class="h2" style="font-size:19px">AI 주간 요약</h2>'+
+        '<div class="ai"><ul>'+sm.pts.map(function(p){return '<li>'+esc(p)+'</li>';}).join("")+'</ul>'+
+        (sm.ask.length?'<p style="font-size:14px"><b>빠진 정보가 있어요</b><br>'+sm.ask.map(esc).join("<br>")+'</p>':'')+'</div>'+
+        '<p class="disclaim">이 요약은 보호자의 기록을 정리한 것이에요. 질병을 진단하거나 통증을 판정하지 않아요. 변화가 계속되면 동물병원 상담을 권해요.</p>'+
+        '<button class="btn ghost" data-report>'+(S.reportOpen?"상담 리포트 닫기":"병원 상담용 리포트 만들기")+'</button>'+
+        (S.reportOpen?'<pre class="report" id="reportText">'+report+'</pre><button class="btn small quiet" data-copy>리포트 복사</button>':'')+
+        ux("⑦ 상담 준비","여정 <b>04 조정</b>의 '상담 리포트'예요. 병원에 가기 전 관찰 내용과 질문을 정리해 보호자가 말로 설명하는 부담을 줄여요.")+
+      '</div>'+
+      '<div class="panel"><h2 class="h2" style="font-size:17px;margin-bottom:8px">최근 기록</h2><ul class="log">'+S.logs.slice().reverse().map(function(l){return '<li><span class="num">'+l.d+'</span><span>식사 '+MEAL_LABEL[l.meal]+' · 활동 '+l.walk+' · 배변 '+l.poop+(l.memo?' · '+esc(l.memo):'')+'</span></li>';}).join("")+'</ul></div>'+
+    '</div>'+
+  '</div></section>';
+};
+
+/* 구독 관리 */
+function addDays(iso, n){var d=new Date(iso+"T00:00:00");d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
+function fmt(iso){var d=new Date(iso+"T00:00:00");return (d.getMonth()+1)+"월 "+d.getDate()+"일 ("+"일월화수목금토"[d.getDay()]+")";}
+V.my = function(){
+  var s=S.sub;
+  if(s.ended){
+    var msg={pause:"구독을 "+s.ended+"까지 일시정지했어요. 그 전에 언제든 다시 시작할 수 있어요.",cancel:"구독을 해지했어요. 이미 결제된 이번 회차는 예정대로 보내드려요.",farewell:"그동안 "+S.pet.name+"와 함께해 주셔서 고맙습니다. 남은 회차는 환불하고, 마케팅 알림과 기록 알림을 모두 멈췄어요. 기록은 원하실 때 내려받거나 지울 수 있어요."}[s.endChoice];
+    return '<section class="view"><div class="panel stack" style="max-width:600px;margin:0 auto">'+
+      '<h1 class="h2">'+(s.endChoice==="farewell"?"마음을 다해 정리했어요":"처리가 끝났어요")+'</h1><p>'+esc(msg)+'</p>'+
+      ux("⑧ 배려 있는 종료","해지를 막는 단계(리텐션 팝업, 쿠폰 공세)를 두지 않았어요. 이별한 보호자에게 광고·기록 알림이 계속 가지 않게 하는 것이 과제1의 <b>'이별 후 알림을 줄이는 종료 모드'</b>예요.")+
+      '<button class="btn quiet" data-restore>프로토타입 되돌리기</button></div></section>';
+  }
+  var suggest = s.remain>=50? 7 : (s.remain<=20? -5 : 0);
+  var endUI="";
+  if(s.endChoice!==null){
+    endUI='<div class="panel stack"><h2 class="h2" style="font-size:19px">구독을 어떻게 할까요?</h2><div class="endopts">'+
+      [["pause","잠시 쉬기","1개월 동안 배송과 결제를 멈춰요. 기록은 그대로 쓸 수 있어요."],
+       ["cancel","해지하기","다음 결제부터 멈춰요. 위약금은 없어요."],
+       ["farewell","아이와 이별했어요","남은 회차를 환불하고 모든 알림·광고를 멈춰요. 다시 묻지 않을게요."]].map(function(o){
+        return '<button class="endopt" data-end="'+o[0]+'" aria-pressed="'+(s.endChoice===o[0])+'"><b>'+o[1]+'</b><small>'+o[2]+'</small></button>';}).join("")+
+      '</div>'+
+      (s.endChoice?'<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" data-endconfirm>'+({pause:"1개월 쉬기",cancel:"해지 확정",farewell:"정리하기"}[s.endChoice])+'</button><button class="btn quiet" data-endcancel>돌아가기</button></div>':'<button class="btn quiet" data-endcancel>돌아가기</button>')+
+      '</div>';
+  }
+  return '<section class="view"><h1 class="h2" style="font-size:28px;margin-bottom:16px">구독 관리</h1><div class="my">'+
+    '<div class="stack">'+
+      '<div class="panel stack">'+
+        '<div class="subhead"><img src="img/box.jpg" alt=""><div><span class="tag green">이용 중</span><h2 class="h2" style="font-size:19px;margin-top:4px">시니어 맞춤 케어 박스 · '+(s.plan==="premium"?"프리미엄":"기본")+'</h2><span class="num" style="color:var(--muted)">'+(s.plan==="premium"?"월 39,900원":"월 29,900원")+' · '+s.cycleWeeks+'주마다</span></div></div>'+
+        '<div><span style="color:var(--muted);font-size:14px">다음 배송</span><div class="big num">'+fmt(s.next)+'</div></div>'+
+        '<div class="row"><button class="btn small quiet" data-shift="-7">1주 당기기</button><button class="btn small quiet" data-shift="7">1주 미루기</button><button class="btn small quiet" data-shift="28">이번 회차 건너뛰기</button></div>'+
+      '</div>'+
+      '<div class="panel stack">'+
+        '<h2 class="h2" style="font-size:19px">지난 박스, 얼마나 남았나요?</h2>'+
+        '<label for="remain" style="font-size:14px;color:var(--muted)">간식·영양 보조 제품 기준 <b class="num" style="color:var(--fg)">'+s.remain+'%</b> 남음</label>'+
+        '<input id="remain" type="range" min="0" max="100" step="10" value="'+s.remain+'">'+
+        (suggest? '<div class="check '+(suggest>0?"ok":"warn")+'">'+(suggest>0?"↻":"!")+' <span>지금 속도라면 '+(suggest>0?"<b>1주 미뤄도</b> 충분해요.":"<b>5일 앞당기는 게</b> 좋겠어요.")+' 다음 배송을 '+fmt(addDays(s.next,suggest))+'로 바꿀까요?</span></div><button class="btn small" data-shift="'+suggest+'">'+fmt(addDays(s.next,suggest))+'로 변경</button>':'<div class="check ok">✓ <span>지금 배송일이 남은 양과 잘 맞아요.</span></div>')+
+        ux("⑨ 잔여량 기반 배송","정해진 날짜에 무조건 보내지 않고 <b>남은 양</b>을 기준으로 배송일을 제안해요. 과제1의 '배송을 소비 속도에 맞춘다'를 구현한 화면이에요.")+
+      '</div>'+
+    '</div>'+
+    '<div class="stack">'+
+      '<div class="panel stack"><h2 class="h2" style="font-size:19px">이번 달 구성</h2><ul class="compo">'+boxCompo().map(function(c){return '<li><span class="dot"></span><b>'+esc(c.n)+'</b><small>'+c.r+'</small></li>';}).join("")+'</ul>'+
+        '<a class="btn small ghost" href="#box" data-rebuild>구성 다시 고르기</a></div>'+
+      (s.endChoice===null?'<div class="panel stack"><h2 class="h2" style="font-size:17px">구독 멈추기</h2><p style="color:var(--muted);font-size:14px">잠시 쉬기, 해지, 이별 모두 여기서 2번 탭이면 끝나요.</p><button class="btn small quiet" data-endopen>구독 멈추기·해지</button></div>':endUI)+
+    '</div>'+
+  '</div></section>';
+};
+
+/* ---------- 라우터 ---------- */
+var app=document.getElementById("app");
+function route(){
+  var h=(location.hash||"#home").slice(1);
+  var key=h, html;
+  if(h.indexOf("p-")===0){ html=V.product(h.slice(2)); key="shop"; }
+  else if(V[h]){ html=V[h](); }
+  else { html=V.home(); key="home"; }
+  app.innerHTML=html;
+  document.querySelectorAll("[data-nav]").forEach(function(a){ if(a.getAttribute("data-nav")===key) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  syncCount();
+}
+function rerender(){ var y=window.scrollY; route(); window.scrollTo(0,y); }
+window.addEventListener("hashchange", function(){ if(location.hash!=="#cart") S.ordered=null; route(); window.scrollTo(0,0); });
+
+/* ---------- 이벤트 ---------- */
+document.addEventListener("click", function(e){
+  var t=e.target.closest("button"); if(!t) return;
+  var d=t.dataset;
+  if(t.id==="uxToggle"){ var on=document.body.classList.toggle("ux-on"); t.setAttribute("aria-pressed",on); persist(); toast(on?"UX 개선 포인트를 표시해요":"UX 개선 포인트를 숨겼어요"); return; }
+  if(d.goConcern){ S.filter={concern:d.goConcern,cat:"all"}; location.hash="shop"; return; }
+  if(d.concern){ S.filter.concern = S.filter.concern===d.concern?null:d.concern; rerender(); return; }
+  if(d.cat){ S.filter.cat=d.cat; rerender(); return; }
+  // product
+  if(d.mode){ V.product.st.mode=d.mode; rerender(); return; }
+  if(d.cycle){ V.product.st.cycle=+d.cycle; rerender(); return; }
+  if(d.q){ var st=V.product.st; st.qty=Math.max(1,Math.min(9,st.qty+(+d.q))); rerender(); return; }
+  if(d.add!==undefined){ var s2=V.product.st, p=byId(s2.id);
+    var price = s2.mode==="trial"? p.trial : (s2.mode==="sub"? Math.round(p.price*0.9/100)*100 : p.price);
+    var note = s2.mode==="trial"?"소량 체험팩 (3회분)":(s2.mode==="sub"?"정기배송 · "+s2.cycle+"주마다":"한 번 구매");
+    addCart({key:p.id+"|"+s2.mode+"|"+s2.cycle, id:p.id, name:p.name, img:p.img, price:price, qty:s2.qty, mode:s2.mode==="sub"?"sub":"once", note:note}); return; }
+  // box
+  if(d.pet){ S.pet[d.pet]=d.v; rerender(); return; }
+  if(d.concernPick){ var c=S.pet.concerns, i=c.indexOf(d.concernPick);
+    if(i>-1) c.splice(i,1); else { if(c.length>=2){ toast("최대 2개까지 고를 수 있어요"); return; } c.push(d.concernPick); }
+    rerender(); return; }
+  if(d.current){ var md=document.getElementById("meds"); if(md) S.pet.meds=md.value; var cu=S.pet.current, j=cu.indexOf(d.current); if(j>-1) cu.splice(j,1); else cu.push(d.current); rerender(); return; }
+  if(d.step){ var m=document.getElementById("meds"); if(m) S.pet.meds=m.value;
+    if(+d.step>0 && S.box.step===1 && !S.pet.concerns.length){ toast("변화를 하나 이상 골라 주세요"); return; }
+    S.box.step=Math.max(0,Math.min(3,S.box.step+(+d.step))); rerender(); return; }
+  if(d.plan){ S.box.plan=d.plan; rerender(); return; }
+  if(d.addbox!==undefined){ var pr=S.box.plan==="premium"?39900:29900;
+    S.sub.plan=S.box.plan;
+    addCart({key:"carebox|"+S.box.plan, id:"carebox", name:"시니어 맞춤 케어 박스 · "+(S.box.plan==="premium"?"프리미엄":"기본"), img:"box.jpg", price:pr, qty:1, mode:"sub", note:"매달 정기배송 · "+boxCompo().length+"가지 구성"}); return; }
+  // cart
+  if(d.cq){ var it=S.cart[+d.cq]; it.qty=Math.max(1,it.qty+(+d.d)); persist(); rerender(); return; }
+  if(d.rm){ S.cart.splice(+d.rm,1); persist(); rerender(); return; }
+  if(d.order!==undefined){ var sum=S.cart.reduce(function(a,c){return a+c.price*c.qty;},0);
+    S.ordered={no:"AP-1111-"+String(Math.floor(Math.random()*9000)+1000), total:sum+(sum>=30000?0:3000), hasSub:S.cart.some(function(c){return c.mode==="sub";})};
+    S.cart=[]; persist(); rerender(); return; }
+  // record
+  if(d.today){ var k=d.today, v=k==="meal"?+d.v:d.v; var mm=document.getElementById("memo"); if(mm) S.today.memo=mm.value;
+    S.today[k]= S.today[k]===v?null:v; rerender(); return; }
+  if(d.save!==undefined){ var mo=document.getElementById("memo"); var tt=S.today;
+    S.logs.push({d:"11/11", meal:tt.meal, walk:tt.walk, poop:tt.poop, memo:(mo?mo.value:tt.memo).trim()});
+    S.today={meal:null,walk:null,poop:null,water:tt.water,memo:""};
+    S.logs = S.logs.slice(-7);
+    rerender(); toast("오늘 기록을 저장했어요"); return; }
+  if(d.report!==undefined){ S.reportOpen=!S.reportOpen; rerender(); return; }
+  if(d.copy!==undefined){ var txt=document.getElementById("reportText").textContent;
+    var fallback=function(){var r=document.createRange();r.selectNodeContents(document.getElementById("reportText"));var sel=getSelection();sel.removeAllRanges();sel.addRange(r);toast("리포트를 선택했어요. 복사해 주세요");};
+    try{ navigator.clipboard.writeText(txt).then(function(){toast("리포트를 복사했어요");},fallback); }catch(err){ fallback(); }
+    return; }
+  // my
+  if(d.shift){ S.sub.next=addDays(S.sub.next,+d.shift); if(+d.shift!==28&&Math.abs(+d.shift)<7) S.sub.remain=40; rerender(); toast("다음 배송일을 "+fmt(S.sub.next)+"로 바꿨어요"); return; }
+  if(d.endopen!==undefined){ S.sub.endChoice=""; rerender(); return; }
+  if(d.end){ S.sub.endChoice=d.end; rerender(); return; }
+  if(d.endcancel!==undefined){ S.sub.endChoice=null; rerender(); return; }
+  if(d.endconfirm!==undefined){ S.sub.ended = S.sub.endChoice==="pause"? fmt(addDays(S.sub.next,30)) : "done"; rerender(); window.scrollTo(0,0); return; }
+  if(d.restore!==undefined){ S.sub.ended=null; S.sub.endChoice=null; rerender(); return; }
+});
+document.addEventListener("input", function(e){
+  if(e.target.id==="remain"){ S.sub.remain=+e.target.value; var y=window.scrollY; route(); window.scrollTo(0,y); var r=document.getElementById("remain"); if(r) r.focus(); }
+});
+document.addEventListener("click", function(e){ var a=e.target.closest("[data-rebuild]"); if(a){ S.box.step=3; } });
+
+if(document.body.classList.contains("ux-on")) document.getElementById("uxToggle").setAttribute("aria-pressed","true");
+route();
+})();
+</script>
