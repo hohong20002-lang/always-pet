@@ -263,6 +263,9 @@ table.t input,table.t select{padding:6px 8px;font-size:14px;width:auto;max-width
 dl.kv.wide{grid-template-columns:110px 1fr}
 .footer-wrap{display:flex;flex-direction:column;gap:4px}
 @media (max-width:520px){.form .two{grid-template-columns:1fr}}
+/* 관리자 방문 현황: 가로 막대 */
+.bar-h{height:10px;border-radius:5px;background:var(--sunk);overflow:hidden}
+.bar-h i{display:block;height:100%;background:var(--brand);border-radius:5px}
 
 /* ───────── 연관 상품 추천 배너 ───────── */
 /* 웹: 오른쪽 아래 작은 상자 */

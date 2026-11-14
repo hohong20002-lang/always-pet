@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { getUser } from "@/lib/auth";
+import { adminEmails, getUser } from "@/lib/auth";
+import { MembersTab, VisitsTab } from "./ActivityTabs";
 import { cols } from "@/lib/models";
 import { fmtDate, fmtDateTime, ORDER_STATUS, SUB_STATUS, won } from "@/lib/shop";
 import { updateOrder, updateProduct } from "@/app/actions/admin";
@@ -49,7 +50,10 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         <div className="panel"><b className="num">{activeSubs}건</b><span>이용 중 정기배송</span></div>
         <div className="panel"><b className="num">{members ?? 0}명</b><span>회원</span></div>
       </div>
-      <nav className="tabs">{T("orders", "주문 관리")}{T("subs", "정기배송")}{T("products", "상품·재고")}</nav>
+      <nav className="tabs">{T("orders", "주문 관리")}{T("subs", "정기배송")}{T("products", "상품·재고")}{T("visits", "방문 현황")}{T("members", "회원·로그인 기록")}</nav>
+
+      {tab === "visits" && <VisitsTab />}
+      {tab === "members" && <MembersTab admins={adminEmails()} />}
 
       {tab === "orders" && (
         <div className="tablewrap">

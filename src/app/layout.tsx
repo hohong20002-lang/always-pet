@@ -5,6 +5,7 @@ import { getUser } from "@/lib/auth";
 import { isConfigured } from "@/lib/db";
 import { getCartCount } from "@/lib/queries";
 import { NavLinks, TabBar } from "@/components/Nav";
+import VisitTracker from "@/components/VisitTracker";
 
 export const metadata: Metadata = {
   title: { default: "올웨이즈 펫 · 노령 반려동물 케어 커머스", template: "%s · 올웨이즈 펫" },
@@ -76,6 +77,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </footer>
 
         <TabBar cartCount={cartCount} />
+        <VisitTracker />
       </body>
     </html>
   );

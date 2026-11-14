@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { isConfigured, newId } from "@/lib/db";
 import { cols } from "@/lib/models";
-import { adminEmails, checkPassword, endSession, hashPassword, startSession } from "@/lib/auth";
+import { adminEmails, checkPassword, endSession, getUser, hashPassword, startSession } from "@/lib/auth";
+import { recordLoginEvent } from "@/lib/activity";
 import { blockedMinutes, clearFailures, clientIp, recordFailure } from "@/lib/ratelimit";
 import { safeNext, str } from "@/lib/validate";
 
@@ -31,10 +32,12 @@ export async function login(_: AuthState, fd: FormData): Promise<AuthState> {
   const u = await users.findOne({ email });
   if (!u || !(await checkPassword(password, u.password_hash))) {
     await recordFailure(keys, 15);
+    await recordLoginEvent("login_failed", email, u?._id ?? null);
     return { error: "이메일 또는 비밀번호가 맞지 않아요." };
   }
   await clearFailures([keys[0]]);
   await startSession(u._id);
+  await recordLoginEvent("login", email, u._id);
   revalidatePath("/", "layout");
   redirect(safeNext(fd.get("next")));
 }
@@ -79,11 +82,14 @@ export async function signup(_: AuthState, fd: FormData): Promise<AuthState> {
   }
   await recordFailure([ipKey], 60);
   await startSession(id);
+  await recordLoginEvent("signup", email, id);
   revalidatePath("/", "layout");
   redirect(safeNext(fd.get("next")));
 }
 
 export async function logout() {
+  const user = await getUser();
+  if (user) await recordLoginEvent("logout", user.email, user.id);
   await endSession();
   revalidatePath("/", "layout");
   redirect("/");

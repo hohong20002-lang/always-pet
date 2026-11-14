@@ -35,6 +35,12 @@ async function setup(db: Db) {
     db.collection("users").createIndex({ email: 1 }, { unique: true }),
     db.collection("sessions").createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 }),
     db.collection("login_attempts").createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 }),
+    // 방문 기록 90일, 로그인 기록 180일 뒤 자동 삭제
+    db.collection("visits").createIndex({ at: 1 }, { expireAfterSeconds: 90 * 86400 }),
+    db.collection("visits").createIndex({ day: 1, vid: 1 }),
+    db.collection("visits").createIndex({ vid: 1, path: 1, slot: 1 }, { unique: true }),
+    db.collection("login_events").createIndex({ at: 1 }, { expireAfterSeconds: 180 * 86400 }),
+    db.collection("login_events").createIndex({ user_id: 1, kind: 1, at: -1 }),
     db.collection("pets").createIndex({ user_id: 1 }),
     db.collection("cart_items").createIndex({ user_id: 1, product_id: 1, mode: 1, cycle_weeks: 1, plan: 1 }, { unique: true }),
     db.collection("orders").createIndex({ order_no: 1 }, { unique: true }),
