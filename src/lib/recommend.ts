@@ -113,7 +113,11 @@ export async function recommend(opts: { context: string[]; userId?: string | nul
     .filter(([id]) => (supporters.get(id) ?? 0) >= MIN_SUPPORT)
     .sort((a, b) => b[1] - a[1] || (supporters.get(b[0]) ?? 0) - (supporters.get(a[0]) ?? 0))
     .slice(0, limit)
-    .map(([id]) => toRec(byId.get(id)!, `비슷하게 구매한 분들 ${supporters.get(id)}명이 함께 샀어요`, "together"));
+    .map(([id]) => {
+      // 구매자가 적을 때 정확한 인원을 보여 주면 특정 회원의 구매를 짐작할 수 있어서 5명 이상일 때만 숫자를 표시
+      const n = supporters.get(id) ?? 0;
+      return toRec(byId.get(id)!, n >= 5 ? `비슷하게 구매한 분들 ${n}명이 함께 샀어요` : "비슷하게 구매한 분들이 함께 샀어요", "together");
+    });
 
   if (together.length >= limit) return together;
 
