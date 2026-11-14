@@ -49,9 +49,9 @@ export default function RecordForm({ petId, initial, today }: { petId: string; i
       </div>
       <div className="field"><span>산책·활동</span>{opts(["평소", "줄었음", "많이 줄었음"], walk, setWalk)}</div>
       <div className="field"><span>배변</span>{opts(["정상", "무름", "변비", "횟수 적음"], poop, setPoop)}</div>
-      <div className="field"><span>물 마시는 양 <small style={{ color: "var(--muted)", fontWeight: 400 }}>(선택)</small></span>{opts(["평소", "많음", "적음"], water, setWater)}</div>
+      <div className="field"><span>물 마시는 양<small style={{ color: "var(--muted)", fontWeight: 400 }}>(선택사항)</small></span>{opts(["평소", "많음", "적음"], water, setWater)}</div>
       <div className="field">
-        <label htmlFor="memo"><span style={{ fontWeight: 700, fontSize: 14 }}>메모 (선택)</span></label>
+        <label htmlFor="memo"><span style={{ fontWeight: 700, fontSize: 14 }}>메모(선택사항)</span></label>
         <textarea id="memo" value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="예: 소파에 못 올라가고 앞에서 기다림" maxLength={300} />
       </div>
       {msg?.error && <p className="err">{msg.error}</p>}

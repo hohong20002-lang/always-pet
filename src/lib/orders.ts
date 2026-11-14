@@ -3,6 +3,7 @@ import { newId } from "@/lib/db";
 import { cols, type OrderDoc } from "@/lib/models";
 import { addDays, todayKST } from "@/lib/shop";
 import { cancelPayment } from "@/lib/toss";
+import { invalidateRecommendations } from "@/lib/recommend";
 
 /** 결제 승인 후: 주문을 결제 완료로 바꾸고 재고 차감·정기배송 등록·장바구니 비우기. 이미 처리됐으면 false */
 export async function markPaid(order: OrderDoc, pay: { paymentKey: string; method?: string; receiptUrl?: string; approvedAt?: string }) {
@@ -47,6 +48,7 @@ export async function markPaid(order: OrderDoc, pay: { paymentKey: string; metho
     }
   }
   await cart.deleteMany({ user_id: order.user_id });
+  invalidateRecommendations(); // 방금 구매가 다음 추천에 바로 반영되게
   return true;
 }
 
@@ -62,6 +64,7 @@ export async function cancelOrderDoc(order: OrderDoc, reason: string): Promise<{
   if (u.modifiedCount && order.status !== "pending") {
     for (const it of order.items) await products.updateOne({ _id: it.product_id }, { $inc: { stock: it.qty } });
     await subs.updateMany({ order_id: order._id }, { $set: { status: "cancelled" } });
+    invalidateRecommendations(); // 취소된 구매는 추천 근거에서 빠지게
   }
   return { ok: true };
 }

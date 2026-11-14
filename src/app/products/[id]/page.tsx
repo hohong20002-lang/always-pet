@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import { getPets, getProduct } from "@/lib/queries";
 import { getUser } from "@/lib/auth";
 import ProductBuy from "./ProductBuy";
+import RecommendBanner from "@/components/RecommendBanner";
+import { recommend } from "@/lib/recommend";
 
 export async function generateMetadata({ params }: PageProps<"/products/[id]">): Promise<Metadata> {
   const p = await getProduct((await params).id);
@@ -19,6 +21,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[id]"
   const pets = user ? await getPets(user.id) : [];
   const pet = pets[0];
   const overlap = pet ? p.main_ingredients.filter((m) => pet.current_ingredients.includes(m)) : [];
+  const recs = await recommend({ context: [p.id], userId: user?.id });
 
   return (
     <section className="view">
@@ -59,6 +62,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[id]"
           />
         </div>
       </div>
+      <RecommendBanner items={recs} title="이 상품과 함께 보면 좋아요" spot={`product:${p.id}`} />
     </section>
   );
 }

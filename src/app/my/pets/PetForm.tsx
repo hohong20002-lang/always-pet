@@ -21,7 +21,7 @@ export default function PetForm({ pet }: { pet?: Pet }) {
     <div className="form">
       <div className="two">
         <label>이름<input type="text" value={p.name} onChange={(e) => set("name", e.target.value)} maxLength={20} placeholder="예: 보리" /></label>
-        <label>품종 <small>(선택)</small><input type="text" value={p.breed} onChange={(e) => set("breed", e.target.value)} maxLength={30} placeholder="예: 말티즈" /></label>
+        <label><span className="lbl">품종<small>(선택사항)</small></span><input type="text" value={p.breed} onChange={(e) => set("breed", e.target.value)} maxLength={30} placeholder="예: 말티즈" /></label>
       </div>
       <div className="field"><span>종류</span>
         <div className="opts">
@@ -42,7 +42,7 @@ export default function PetForm({ pet }: { pet?: Pet }) {
       <div className="field"><span>지금 먹는 간식·영양제 주원료</span>
         <div className="opts">{INGREDIENTS.map((o) => <button type="button" key={o} onClick={() => toggle("current_ingredients", o)} aria-pressed={p.current_ingredients.includes(o)}>{o}</button>)}</div>
       </div>
-      <label>복용 중인 약 <small>(선택)</small><textarea value={p.meds} onChange={(e) => set("meds", e.target.value)} maxLength={200} placeholder="예: 심장약 1일 2회" /></label>
+      <label><span className="lbl">복용 중인 약<small>(선택사항)</small></span><textarea value={p.meds} onChange={(e) => set("meds", e.target.value)} maxLength={200} placeholder="예: 심장약 1일 2회" /></label>
       {msg?.error && <p className="err">{msg.error}</p>}
       {msg?.ok && <p className="ok-msg">{msg.ok}</p>}
       <div className="row">

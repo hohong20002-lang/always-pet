@@ -5,6 +5,8 @@ import { getUser } from "@/lib/auth";
 import { cols } from "@/lib/models";
 import { fmtDateTime, modeNote, ORDER_STATUS, won } from "@/lib/shop";
 import CancelOrder from "./CancelOrder";
+import RecommendBanner from "@/components/RecommendBanner";
+import { recommend } from "@/lib/recommend";
 
 export const metadata: Metadata = { title: "주문 상세" };
 
@@ -18,6 +20,11 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/my
   if (!o) notFound();
   const items = o.items.map((it, i) => ({ ...it, id: String(i) }));
   const hasSub = items.some((i) => i.mode === "sub");
+  // 방금 결제를 마친 본인 주문일 때만 "함께 사면 좋은 상품" 추천
+  const recs =
+    sp.paid === "1" && o.user_id === user.id && o.status !== "cancelled"
+      ? await recommend({ context: o.items.map((i) => i.product_id), userId: user.id })
+      : [];
 
   return (
     <section className="view">
@@ -74,6 +81,7 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/my
           {(o.status === "paid" || o.status === "pending") && <CancelOrder orderNo={o.order_no} paid={o.status === "paid"} />}
         </aside>
       </div>
+      <RecommendBanner items={recs} title="이번 주문과 함께 사면 좋아요" spot={`order:${o.order_no}`} />
     </section>
   );
 }

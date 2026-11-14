@@ -219,6 +219,11 @@ html,body{margin:0}
 .form{display:flex;flex-direction:column;gap:12px}
 .form label{display:flex;flex-direction:column;gap:6px;font-weight:700;font-size:14px}
 .form label small{font-weight:400;color:var(--muted)}
+/* 라벨 제목과 (선택사항) 같은 보조 문구를 한 줄로 */
+.form label .lbl{display:block}
+.form label .lbl small{margin-left:2px}
+/* 두 칸을 나란히 둘 때 라벨 길이가 달라도 입력칸 아래쪽을 맞춤 */
+.form .two{align-items:end}
 input[type=text],input[type=email],input[type=password],input[type=tel],input[type=number],input[type=date],select{
   width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);font-size:15px}
 .form .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -251,3 +256,37 @@ table.t input,table.t select{padding:6px 8px;font-size:14px;width:auto;max-width
 dl.kv.wide{grid-template-columns:110px 1fr}
 .footer-wrap{display:flex;flex-direction:column;gap:4px}
 @media (max-width:520px){.form .two{grid-template-columns:1fr}}
+
+/* ───────── 연관 상품 추천 배너 ───────── */
+/* 웹: 오른쪽 아래 작은 상자 */
+.rec-banner{position:fixed;right:24px;bottom:24px;z-index:30;width:300px;background:var(--surface);border:1px solid var(--line);
+  border-radius:16px;padding:12px 14px 12px;box-shadow:0 10px 30px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:8px}
+.rec-title{font-size:12px;font-weight:700;color:var(--brand);letter-spacing:.02em;padding-right:24px}
+.rec-x{position:absolute;top:6px;right:8px;width:28px;height:28px;border:0;background:transparent;color:var(--muted);font-size:20px;line-height:1;border-radius:8px}
+.rec-x:hover{background:var(--sunk)}
+.rec-body{display:grid;grid-template-columns:64px 1fr;gap:10px;align-items:center;text-decoration:none}
+.rec-body img{width:64px;height:64px;border-radius:10px;object-fit:cover;background:var(--sunk)}
+.rec-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rec-info b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec-info small{font-size:12px;color:var(--brand-deep);background:var(--brand-soft);border-radius:6px;padding:2px 6px;align-self:flex-start;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rec-info .num{font-size:13px;font-weight:700}
+.rec-info em{font-style:normal;font-weight:400;color:var(--warm)}
+.rec-go{display:none}
+.rec-dots{display:flex;gap:6px;justify-content:center}
+.rec-dots button{width:7px;height:7px;padding:0;border-radius:50%;border:0;background:var(--line)}
+.rec-dots button[aria-pressed="true"]{background:var(--brand)}
+@media (prefers-reduced-motion:no-preference){.rec-banner{animation:rec-in .3s ease-out}}
+@keyframes rec-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* 모바일: 하단 탭 바로 위에 가로 바 */
+@media (max-width:760px){
+  .rec-banner{left:8px;right:8px;width:auto;bottom:calc(64px + env(safe-area-inset-bottom,0px) + 8px);
+    padding:8px 40px 8px 10px;border-radius:14px;gap:4px}
+  .rec-title{font-size:11px}
+  .rec-x{top:50%;transform:translateY(-50%);right:4px}
+  .rec-body{grid-template-columns:44px 1fr auto;gap:10px}
+  .rec-body img{width:44px;height:44px;border-radius:8px}
+  .rec-go{display:inline-flex;align-items:center;background:var(--brand);color:var(--on-brand);font-weight:700;font-size:13px;border-radius:999px;padding:6px 12px}
+  .rec-dots{display:none}
+  body.has-rec main{padding-bottom:170px}
+}

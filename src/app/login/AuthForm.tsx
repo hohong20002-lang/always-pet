@@ -30,7 +30,7 @@ export default function AuthForm({ mode, next, error }: { mode: "login" | "signu
             <input type="email" name="email" autoComplete="email" required />
           </label>
           <label>
-            비밀번호 {mode === "signup" && <small>8자 이상</small>}
+            <span className="lbl">비밀번호{mode === "signup" && <small>(8자 이상)</small>}</span>
             <input type="password" name="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} minLength={mode === "signup" ? 8 : undefined} required />
           </label>
           {mode === "signup" && (

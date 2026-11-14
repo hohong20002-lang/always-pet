@@ -4,6 +4,8 @@ import { getUser } from "@/lib/auth";
 import { loadCart } from "@/lib/cart";
 import { FREE_SHIP, won } from "@/lib/shop";
 import { CartQty } from "./CartQty";
+import RecommendBanner from "@/components/RecommendBanner";
+import { recommend } from "@/lib/recommend";
 
 export const metadata: Metadata = { title: "장바구니" };
 
@@ -33,6 +35,7 @@ export default async function CartPage() {
     );
 
   const soldOut = cart.lines.some((l) => l.stock < l.qty);
+  const recs = await recommend({ context: cart.lines.map((l) => l.product_id), userId: user.id });
   return (
     <section className="view">
       <h1 className="h2" style={{ fontSize: 28, marginBottom: 12 }}>장바구니</h1>
@@ -68,6 +71,7 @@ export default async function CartPage() {
           )}
         </aside>
       </div>
+      <RecommendBanner items={recs} title="장바구니와 함께 사면 좋아요" spot="cart" />
     </section>
   );
 }

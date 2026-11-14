@@ -79,7 +79,7 @@ export default function CheckoutForm({ amount, customerKey, profile }: { amount:
         </div>
         <div className="two">
           <label>
-            우편번호 <small>(선택)</small>
+            <span className="lbl">우편번호<small>(선택사항)</small></span>
             <input type="text" name="zipcode" defaultValue={profile.zipcode} autoComplete="postal-code" inputMode="numeric" />
           </label>
           <span />
@@ -93,7 +93,7 @@ export default function CheckoutForm({ amount, customerKey, profile }: { amount:
           <input type="text" name="address_detail" defaultValue={profile.address_detail} autoComplete="address-line2" />
         </label>
         <label>
-          배송 메모 <small>(선택)</small>
+          <span className="lbl">배송 메모<small>(선택사항)</small></span>
           <input type="text" name="memo" placeholder="예: 문 앞에 놓아 주세요" />
         </label>
         <label style={{ flexDirection: "row", alignItems: "center", fontWeight: 400, gap: 8 }}>

@@ -124,7 +124,7 @@ export default function BoxBuilder({ pets, loggedIn }: { pets: Pet[]; loggedIn: 
                 <button key={o} onClick={() => toggle("current_ingredients", o)} aria-pressed={pet.current_ingredients.includes(o)}>{o}</button>
               ))}
             </div>
-            <label className="t" htmlFor="meds">복용 중인 약 <small style={{ color: "var(--muted)", fontWeight: 400 }}>(선택)</small></label>
+            <label className="t" htmlFor="meds">복용 중인 약<small style={{ color: "var(--muted)", fontWeight: 400 }}>(선택사항)</small></label>
             <textarea id="meds" value={pet.meds} onChange={(e) => set("meds", e.target.value)} placeholder="예: 심장약 1일 2회" />
           </div>
         )}
