@@ -226,6 +226,13 @@ html,body{margin:0}
 .form .two{align-items:end}
 input[type=text],input[type=email],input[type=password],input[type=tel],input[type=number],input[type=date],select{
   width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);font-size:15px}
+/* 날짜 칸: 아이폰 사파리는 날짜 입력에 자체 최소 너비·가운데 정렬을 줘서 칸 밖으로 삐져나와요.
+   기본 모양을 끄고 부모 너비 안에 머물게 해요 */
+input[type=date]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;min-height:46px;line-height:1.4;text-align:left}
+input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
+input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.7}
+/* 세로로 쌓이는 칸 안의 입력창이 부모보다 넓어지지 않게 */
+.field>*,.form label>*{min-width:0;max-width:100%}
 .form .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .err{color:var(--danger);font-size:14px;background:color-mix(in srgb,var(--danger) 10%,transparent);border-radius:10px;padding:10px 12px}
 .ok-msg{color:var(--brand-deep);font-size:14px;background:var(--brand-soft);border-radius:10px;padding:10px 12px}
