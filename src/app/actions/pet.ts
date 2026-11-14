@@ -7,6 +7,7 @@ import { newId } from "@/lib/db";
 import { cols } from "@/lib/models";
 import { AGE_GROUPS, CONCERNS, INGREDIENTS, WEIGHT_GROUPS } from "@/lib/shop";
 import { addToCart } from "./cart";
+import { oneOf, safeNext, sid, str, strList } from "@/lib/validate";
 
 export type PetInput = {
   id?: string | null;
@@ -23,28 +24,29 @@ export type PetInput = {
 function clean(p: PetInput) {
   const concernIds = CONCERNS.map((c) => c.id as string);
   return {
-    name: String(p.name ?? "").trim().slice(0, 20) || "우리 아이",
-    species: (p.species === "cat" ? "cat" : "dog") as "dog" | "cat",
-    breed: String(p.breed ?? "").trim().slice(0, 30),
-    age_group: AGE_GROUPS.includes(p.age_group) ? p.age_group : AGE_GROUPS[1],
-    weight_group: WEIGHT_GROUPS.includes(p.weight_group) ? p.weight_group : WEIGHT_GROUPS[0],
-    concerns: (p.concerns ?? []).filter((c) => concernIds.includes(c)).slice(0, 2),
-    current_ingredients: (p.current_ingredients ?? []).filter((c) => INGREDIENTS.includes(c)),
-    meds: String(p.meds ?? "").trim().slice(0, 200),
+    name: str(p?.name, 20) || "우리 아이",
+    species: oneOf(p?.species, ["dog", "cat"] as const, "dog"),
+    breed: str(p?.breed, 30),
+    age_group: oneOf(p?.age_group, AGE_GROUPS, AGE_GROUPS[1]),
+    weight_group: oneOf(p?.weight_group, WEIGHT_GROUPS, WEIGHT_GROUPS[0]),
+    concerns: [...new Set(strList(p?.concerns).filter((c) => concernIds.includes(c)))].slice(0, 2),
+    current_ingredients: [...new Set(strList(p?.current_ingredients).filter((c) => INGREDIENTS.includes(c)))],
+    meds: str(p?.meds, 200),
   };
 }
 
 /** 반려동물 저장 (없으면 새로 만들기). 저장된 id를 돌려줘요. */
 export async function savePet(p: PetInput, next = "/my/pets"): Promise<{ id?: string; error?: string }> {
   const user = await getUser();
-  if (!user) redirect(`/login?next=${encodeURIComponent(next)}`);
+  if (!user) redirect(`/login?next=${encodeURIComponent(safeNext(next))}`);
   const { pets } = await cols();
   const row = clean(p);
-  if (p.id) {
-    const r = await pets.updateOne({ _id: p.id, user_id: user.id }, { $set: row });
+  const petId = sid(p?.id);
+  if (petId) {
+    const r = await pets.updateOne({ _id: petId, user_id: user.id }, { $set: row });
     if (r.matchedCount) {
       revalidatePath("/", "layout");
-      return { id: p.id };
+      return { id: petId };
     }
   }
   const id = newId();
@@ -56,12 +58,14 @@ export async function savePet(p: PetInput, next = "/my/pets"): Promise<{ id?: st
 export async function deletePet(id: string) {
   const user = await getUser();
   if (!user) redirect("/login?next=/my/pets");
+  const petId = sid(id);
+  if (!petId) return;
   const { pets, logs, cart, subs } = await cols();
-  const r = await pets.deleteOne({ _id: id, user_id: user.id });
+  const r = await pets.deleteOne({ _id: petId, user_id: user.id });
   if (r.deletedCount) {
-    await logs.deleteMany({ pet_id: id, user_id: user.id });
-    await cart.updateMany({ pet_id: id, user_id: user.id }, { $set: { pet_id: null } });
-    await subs.updateMany({ pet_id: id, user_id: user.id }, { $set: { pet_id: null } });
+    await logs.deleteMany({ pet_id: petId, user_id: user.id });
+    await cart.updateMany({ pet_id: petId, user_id: user.id }, { $set: { pet_id: null } });
+    await subs.updateMany({ pet_id: petId, user_id: user.id }, { $set: { pet_id: null } });
   }
   revalidatePath("/", "layout");
 }

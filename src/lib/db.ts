@@ -34,6 +34,7 @@ async function setup(db: Db) {
   await Promise.all([
     db.collection("users").createIndex({ email: 1 }, { unique: true }),
     db.collection("sessions").createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 }),
+    db.collection("login_attempts").createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 }),
     db.collection("pets").createIndex({ user_id: 1 }),
     db.collection("cart_items").createIndex({ user_id: 1, product_id: 1, mode: 1, cycle_weeks: 1, plan: 1 }, { unique: true }),
     db.collection("orders").createIndex({ order_no: 1 }, { unique: true }),

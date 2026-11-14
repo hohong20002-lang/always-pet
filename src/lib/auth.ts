@@ -23,7 +23,7 @@ type UserDoc = Omit<User, "id" | "is_admin"> & { _id: string; password_hash: str
 
 const hashToken = (t: string) => createHash("sha256").update(t).digest("hex");
 
-const adminEmails = () =>
+export const adminEmails = () =>
   (process.env.ADMIN_EMAILS ?? "")
     .split(",")
     .map((s) => s.trim().toLowerCase())
